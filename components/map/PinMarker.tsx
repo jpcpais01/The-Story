@@ -27,7 +27,7 @@ export function PinMarker({ location, position }: PinMarkerProps) {
   const Icon = ICONS[location.type];
 
   return (
-    <Html position={position} center distanceFactor={26} occlude={false} zIndexRange={[10, 0]}>
+    <Html position={position} center occlude={false} zIndexRange={[10, 0]}>
       <div className="pointer-events-none flex -translate-y-1/2 flex-col items-center">
         <button
           type="button"
