@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dices, Save, Download, Loader2 } from "lucide-react";
 import { MapClientBoundary } from "@/components/map/MapClientBoundary";
 import { saveWorld } from "@/lib/firestore/world.client";
@@ -38,6 +38,11 @@ export function ProceduralHeightmapPanel({
 }: ProceduralHeightmapPanelProps) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [seedInput, setSeedInput] = useState(String(seed));
+
+  useEffect(() => {
+    setSeedInput(String(seed));
+  }, [seed]);
 
   const previewWorld: WorldDoc = {
     ...world,
@@ -52,6 +57,22 @@ export function ProceduralHeightmapPanel({
 
   function handleReroll() {
     onSeedChange(Math.floor(Math.random() * 1_000_000));
+    setSaved(false);
+  }
+
+  function commitSeedInput() {
+    const parsed = Number(seedInput);
+    if (!Number.isFinite(parsed)) {
+      setSeedInput(String(seed));
+      return;
+    }
+    if (parsed < 0) {
+      handleReroll();
+      return;
+    }
+    const next = Math.floor(parsed);
+    setSeedInput(String(next));
+    onSeedChange(next);
     setSaved(false);
   }
 
@@ -75,11 +96,27 @@ export function ProceduralHeightmapPanel({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
           Procedural heightmap (used while no heightmap image is uploaded above)
         </p>
-        <span className="text-xs text-stone-500">Seed: {seed}</span>
+        <label className="flex items-center gap-1.5 text-xs text-stone-500">
+          Seed
+          <input
+            type="number"
+            value={seedInput}
+            onChange={(e) => setSeedInput(e.target.value)}
+            onBlur={commitSeedInput}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                commitSeedInput();
+              }
+            }}
+            title="Enter a seed you liked to reuse it, or -1 to roll a new random one"
+            className="w-24 rounded-md border border-white/10 bg-ink-900 px-2 py-1 text-stone-200"
+          />
+        </label>
       </div>
 
       <div className="relative h-[380px] w-full overflow-hidden rounded-xl border border-white/10">
@@ -137,8 +174,10 @@ export function ProceduralHeightmapPanel({
         {saved && <span className="text-xs text-gold-300">Saved to the live map.</span>}
       </div>
       <p className="mt-2 text-xs text-stone-500">
-        Re-roll to explore options, adjust detail to taste, then either save to keep this terrain live,
-        or download the grayscale image to paint your hand-drawn map on top of before uploading it above.
+        Re-roll (or type -1 into the seed field) to explore options, adjust detail to taste, then either
+        save to keep this terrain live, or download the grayscale image to paint your hand-drawn map on
+        top of before uploading it above. Liked a specific result? Type its seed number back in any time
+        to return to it.
       </p>
     </div>
   );
