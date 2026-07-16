@@ -7,7 +7,6 @@ import type { MapControls as MapControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 import { Terrain } from "./Terrain";
 import { PinLayer } from "./PinLayer";
-import { HudTracker } from "./HudTracker";
 import { MapCaptureHandler } from "./MapCaptureHandler";
 import { ZoomTiltController } from "./ZoomTiltController";
 import { PanBoundsController } from "./PanBoundsController";
@@ -157,7 +156,6 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
         widthUnits={world.mapWidthUnits}
         depthUnits={world.mapDepthUnits}
       />
-      <HudTracker />
       <MapCaptureHandler widthUnits={world.mapWidthUnits} depthUnits={world.mapDepthUnits} worldName={world.name} />
     </>
   );

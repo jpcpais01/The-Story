@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { Download } from "lucide-react";
-import { ScaleBar } from "./ScaleBar";
 import { useMapStore } from "@/lib/store/mapStore";
 import { useAdminAuth } from "@/lib/auth/useAdminAuth";
 
@@ -46,17 +45,14 @@ export function MapHud({ editable = false }: { editable?: boolean }) {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut", delay: 0.15 }}
-        className="pointer-events-auto absolute bottom-5 left-4 flex flex-col items-start gap-2 sm:left-6 sm:flex-row sm:items-center sm:gap-3"
+        className="pointer-events-auto absolute bottom-5 left-4 hidden items-center gap-3 rounded-xl border border-white/10 bg-stone-950/55 px-3 py-2 backdrop-blur-md sm:left-6 sm:flex"
       >
-        <ScaleBar />
-        <div className="hidden items-center gap-3 rounded-xl border border-white/10 bg-stone-950/55 px-3 py-2 backdrop-blur-md sm:flex">
-          {LEGEND_STOPS.map((stop) => (
-            <div key={stop.label} className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: stop.color }} />
-              <span className="text-[11px] text-stone-400">{stop.label}</span>
-            </div>
-          ))}
-        </div>
+        {LEGEND_STOPS.map((stop) => (
+          <div key={stop.label} className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: stop.color }} />
+            <span className="text-[11px] text-stone-400">{stop.label}</span>
+          </div>
+        ))}
       </motion.div>
     </div>
   );

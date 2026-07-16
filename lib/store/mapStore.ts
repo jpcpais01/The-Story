@@ -17,10 +17,6 @@ interface MapStore {
   pendingPin: PendingPin | null;
   setPendingPin: (pin: PendingPin | null) => void;
 
-  /** Approximate world units visible per screen pixel, for the scale bar. */
-  unitsPerPixel: number;
-  setHudMetrics: (metrics: { unitsPerPixel: number }) => void;
-
   captureRequestId: number;
   requestMapCapture: () => void;
 }
@@ -34,9 +30,6 @@ export const useMapStore = create<MapStore>((set) => ({
 
   pendingPin: null,
   setPendingPin: (pin) => set({ pendingPin: pin }),
-
-  unitsPerPixel: 0,
-  setHudMetrics: ({ unitsPerPixel }) => set({ unitsPerPixel }),
 
   captureRequestId: 0,
   requestMapCapture: () => set((s) => ({ captureRequestId: s.captureRequestId + 1 })),
