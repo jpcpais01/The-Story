@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cloudinary, isCloudinaryConfigured } from "@/lib/cloudinary/server";
-import { adminAuth, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
+import { isFirebaseAdminConfigured } from "@/lib/firebase/admin";
+import { adminAuth } from "@/lib/firebase/admin-auth";
 
 export const runtime = "nodejs";
 

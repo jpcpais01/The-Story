@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
-import { adminAuth, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
+import { isFirebaseAdminConfigured } from "@/lib/firebase/admin";
+import { adminAuth } from "@/lib/firebase/admin-auth";
 
 export async function POST(request: Request) {
   if (!isFirebaseAdminConfigured) {
