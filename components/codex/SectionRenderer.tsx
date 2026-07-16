@@ -1,5 +1,5 @@
-import { CldImage } from "next-cloudinary";
 import type { Section } from "@/types/firestore";
+import { CodexImage } from "@/components/codex/CodexImage";
 
 export function SectionRenderer({ sections }: { sections: Section[] }) {
   if (sections.length === 0) return null;
@@ -11,10 +11,9 @@ export function SectionRenderer({ sections }: { sections: Section[] }) {
           <h2 className="font-display text-xl text-parchment-100 sm:text-2xl">{section.heading}</h2>
           {section.image && (
             <div className="relative mt-4 aspect-[16/9] w-full overflow-hidden rounded-xl bg-ink-800">
-              <CldImage
-                src={section.image.publicId}
+              <CodexImage
+                image={section.image}
                 alt={section.image.alt || section.heading}
-                fill
                 sizes="(min-width: 1024px) 720px, 90vw"
                 className="object-cover"
               />

@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { CldImage } from "next-cloudinary";
 import { Landmark, ScrollText, MapPinned } from "lucide-react";
 import type { CodexEntrySummary } from "@/types/firestore";
+import { CodexImage } from "@/components/codex/CodexImage";
 
 const TYPE_META = {
   civilization: { route: "civilizations", label: "Civilization", Icon: Landmark },
@@ -19,10 +19,9 @@ export function EntryCard({ entry }: { entry: CodexEntrySummary }) {
     >
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-ink-700">
         {entry.coverImage ? (
-          <CldImage
-            src={entry.coverImage.publicId}
+          <CodexImage
+            image={entry.coverImage}
             alt={entry.coverImage.alt || entry.title}
-            fill
             sizes="(min-width: 1024px) 320px, 45vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />

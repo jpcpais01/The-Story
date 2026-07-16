@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CldImage } from "next-cloudinary";
 import { Compass } from "lucide-react";
 import { getLocation, listLocations } from "@/lib/firestore/locations.server";
 import { getCivilization } from "@/lib/firestore/civilizations.server";
 import { getEvent } from "@/lib/firestore/events.server";
 import { RelatedEntries, type RelatedItem } from "@/components/codex/RelatedEntries";
+import { CodexImage } from "@/components/codex/CodexImage";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -42,10 +42,9 @@ export default async function LocationPage({ params }: PageProps) {
     <main className="mx-auto max-w-3xl px-4 pb-24 pt-28 sm:px-6">
       {location.coverImage && (
         <div className="relative mb-8 aspect-[16/9] w-full overflow-hidden rounded-2xl bg-ink-800">
-          <CldImage
-            src={location.coverImage.publicId}
+          <CodexImage
+            image={location.coverImage}
             alt={location.coverImage.alt || location.name}
-            fill
             sizes="720px"
             className="object-cover"
           />

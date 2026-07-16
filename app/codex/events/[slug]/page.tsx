@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { CldImage } from "next-cloudinary";
 import { getEvent, listEvents } from "@/lib/firestore/events.server";
 import { getCivilization } from "@/lib/firestore/civilizations.server";
 import { getLocation } from "@/lib/firestore/locations.server";
 import { SectionRenderer } from "@/components/codex/SectionRenderer";
 import { RelatedEntries, type RelatedItem } from "@/components/codex/RelatedEntries";
+import { CodexImage } from "@/components/codex/CodexImage";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -41,10 +41,9 @@ export default async function EventPage({ params }: PageProps) {
     <main className="mx-auto max-w-3xl px-4 pb-24 pt-28 sm:px-6">
       {event.coverImage && (
         <div className="relative mb-8 aspect-[16/9] w-full overflow-hidden rounded-2xl bg-ink-800">
-          <CldImage
-            src={event.coverImage.publicId}
+          <CodexImage
+            image={event.coverImage}
             alt={event.coverImage.alt || event.title}
-            fill
             sizes="720px"
             className="object-cover"
           />
@@ -80,7 +79,7 @@ export default async function EventPage({ params }: PageProps) {
         <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {event.gallery.map((img) => (
             <div key={img.publicId} className="relative aspect-square overflow-hidden rounded-lg bg-ink-800">
-              <CldImage src={img.publicId} alt={img.alt || event.title} fill sizes="240px" className="object-cover" />
+              <CodexImage image={img} alt={img.alt || event.title} sizes="240px" className="object-cover" />
             </div>
           ))}
         </div>
