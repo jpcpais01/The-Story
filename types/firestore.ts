@@ -20,6 +20,8 @@ export interface WorldDoc {
   description: string;
   heightmapUrl: string | null;
   heightmapPublicId: string | null;
+  /** Seed for the procedural placeholder terrain, used whenever heightmapUrl is null. */
+  heightmapSeed: number;
   overlayUrl: string | null;
   overlayPublicId: string | null;
   mapWidthUnits: number;

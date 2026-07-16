@@ -7,11 +7,12 @@ import type { HeightmapData } from "@/lib/terrain/heightSampler";
 
 /**
  * Resolves the active heightmap: the admin-uploaded one if present, otherwise
- * a deterministic procedural placeholder. Returns null only while a real
- * uploaded heightmap is being fetched/rasterized.
+ * a deterministic procedural placeholder generated from `seed` (re-rollable
+ * from World Settings). Returns null only while a real uploaded heightmap is
+ * being fetched/rasterized.
  */
-export function useHeightmap(heightmapUrl: string | null): HeightmapData | null {
-  const procedural = useMemo(() => generateProceduralHeightmap(256), []);
+export function useHeightmap(heightmapUrl: string | null, seed: number): HeightmapData | null {
+  const procedural = useMemo(() => generateProceduralHeightmap(256, seed), [seed]);
   const [uploaded, setUploaded] = useState<HeightmapData | null>(null);
   const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
 

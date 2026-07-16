@@ -7,6 +7,7 @@ import { Save, Loader2 } from "lucide-react";
 import { worldSchema, type WorldFormValues } from "@/lib/validation/world.schema";
 import { saveWorld } from "@/lib/firestore/world.client";
 import { ImageUploadField } from "./ImageUploadField";
+import { ProceduralHeightmapPanel } from "./ProceduralHeightmapPanel";
 import type { WorldDoc, ImageRef } from "@/types/firestore";
 
 export function WorldSettingsForm({ world }: { world: WorldDoc }) {
@@ -16,6 +17,7 @@ export function WorldSettingsForm({ world }: { world: WorldDoc }) {
   const [overlay, setOverlay] = useState<ImageRef | null>(
     world.overlayUrl ? { url: world.overlayUrl, publicId: world.overlayPublicId ?? "", width: 0, height: 0 } : null
   );
+  const [seed, setSeed] = useState(world.heightmapSeed);
   const [saved, setSaved] = useState(false);
 
   const {
@@ -42,6 +44,7 @@ export function WorldSettingsForm({ world }: { world: WorldDoc }) {
       ...values,
       heightmapUrl: heightmap?.url ?? null,
       heightmapPublicId: heightmap?.publicId ?? null,
+      heightmapSeed: seed,
       overlayUrl: overlay?.url ?? null,
       overlayPublicId: overlay?.publicId ?? null,
     });
@@ -54,6 +57,8 @@ export function WorldSettingsForm({ world }: { world: WorldDoc }) {
         <ImageUploadField value={heightmap} onChange={setHeightmap} label="Heightmap (grayscale, white = high)" />
         <ImageUploadField value={overlay} onChange={setOverlay} label="Hand-drawn map overlay" />
       </div>
+
+      <ProceduralHeightmapPanel world={world} seed={seed} onSeedChange={setSeed} />
 
       <Field label="World name" error={errors.name?.message}>
         <input {...register("name")} className={inputClass} />

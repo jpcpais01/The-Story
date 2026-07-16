@@ -15,6 +15,7 @@ export const seedWorld: WorldDoc = {
     "This is placeholder world data. Sign in as admin and edit the World Settings panel to rename your world, write its description, and upload your own heightmap and hand-drawn map once you have them.",
   heightmapUrl: null,
   heightmapPublicId: null,
+  heightmapSeed: 1337,
   overlayUrl: null,
   overlayPublicId: null,
   mapWidthUnits: 100,

@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useRef } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
 import { MapControls } from "@react-three/drei";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
+import * as THREE from "three";
 import { Terrain } from "./Terrain";
 import { PinLayer } from "./PinLayer";
 import { HudTracker } from "./HudTracker";
@@ -20,21 +21,55 @@ interface MapSceneProps {
   highlightUv?: { u: number; v: number } | null;
 }
 
+// Fully top-down: lock the camera's tilt to (effectively) zero. A true 0 would
+// put OrbitControls' spherical math at a singularity, so we use a hair above it.
+const TOP_DOWN_POLAR_ANGLE = 0.0001;
+
+interface ZoomBounds {
+  initial: number;
+  min: number;
+  max: number;
+}
+
+/** Computes an orthographic zoom so `desiredVisibleWidth` world units are framed on load. */
+function useTopDownFraming(desiredVisibleWidth: number): ZoomBounds | null {
+  const camera = useThree((state) => state.camera);
+  const size = useThree((state) => state.size);
+  const [bounds, setBounds] = useState<ZoomBounds | null>(null);
+
+  useEffect(() => {
+    if (!(camera instanceof THREE.OrthographicCamera)) return;
+    const initial = size.width / desiredVisibleWidth;
+    camera.zoom = initial;
+    camera.updateProjectionMatrix();
+    // Synchronizing with an external system (the three.js camera) -- bounds
+    // derive from the same one-time measurement, so they're set here too.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setBounds({ initial, min: initial * 0.35, max: initial * 8 });
+    // Only frame once on mount -- resizing the window should reveal more/less
+    // map at a constant zoom level, like any map app, not rescale the world.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return bounds;
+}
+
 function SceneContents({ world, locations, editable, initialSelectedSlug, highlightUv }: MapSceneProps) {
-  const heightmap = useHeightmap(world.heightmapUrl);
+  const heightmap = useHeightmap(world.heightmapUrl, world.heightmapSeed);
   const overlayTexture = useOverlayTexture(world.overlayUrl);
   const showOverlay = useMapStore((s) => s.showOverlay);
   const placingPin = useMapStore((s) => s.placingPin);
   const setPendingPin = useMapStore((s) => s.setPendingPin);
   const setSelected = useMapStore((s) => s.setSelected);
   const controlsRef = useRef<MapControlsImpl | null>(null);
+  const framing = useTopDownFraming(Math.max(world.mapWidthUnits, world.mapDepthUnits) * 1.3);
 
   useEffect(() => {
     if (initialSelectedSlug) setSelected(initialSelectedSlug);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSelectedSlug]);
 
-  if (!heightmap) return null;
+  if (!heightmap || !framing) return null;
 
   return (
     <>
@@ -71,10 +106,10 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
         makeDefault
         enableDamping
         dampingFactor={0.08}
-        minDistance={18}
-        maxDistance={95}
-        minPolarAngle={0.08}
-        maxPolarAngle={Math.PI * 0.42}
+        minZoom={framing.min}
+        maxZoom={framing.max}
+        minPolarAngle={TOP_DOWN_POLAR_ANGLE}
+        maxPolarAngle={TOP_DOWN_POLAR_ANGLE}
         target={[0, 0, 0]}
       />
       <HudTracker controlsRef={controlsRef} />
@@ -85,13 +120,13 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
 export default function MapScene(props: MapSceneProps) {
   return (
     <Canvas
+      orthographic
       shadows={false}
       dpr={[1, 2]}
-      camera={{ position: [0, 48, 42], fov: 42, near: 0.5, far: 300 }}
+      camera={{ position: [0, 60, 0.01], zoom: 10, near: 0.1, far: 500 }}
       gl={{ antialias: true }}
     >
       <color attach="background" args={["#0b1520"]} />
-      <fog attach="fog" args={["#0b1520", 90, 210]} />
       <Suspense fallback={null}>
         <SceneContents {...props} />
       </Suspense>

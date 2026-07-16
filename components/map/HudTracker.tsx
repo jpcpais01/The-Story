@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
+import * as THREE from "three";
 import { useMapStore } from "@/lib/store/mapStore";
 
 interface HudTrackerProps {
@@ -27,10 +28,11 @@ export function HudTracker({ controlsRef }: HudTrackerProps) {
     const headingRad = controls.getAzimuthalAngle();
     const headingDeg = (-headingRad * 180) / Math.PI;
 
-    const distance = camera.position.distanceTo(controls.target);
-    const fovRad = (("fov" in camera ? camera.fov : 42) * Math.PI) / 180;
-    const visibleHeight = 2 * distance * Math.tan(fovRad / 2);
-    const unitsPerPixel = size.height > 0 ? visibleHeight / size.height : 0;
+    // Orthographic: visible world height = (top - bottom) / zoom, independent of distance.
+    const unitsPerPixel =
+      camera instanceof THREE.OrthographicCamera && size.height > 0
+        ? (camera.top - camera.bottom) / camera.zoom / size.height
+        : 0;
 
     if (
       Math.abs(headingDeg - last.current.heading) > 0.15 ||

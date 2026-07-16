@@ -31,6 +31,7 @@ const world = {
     "Sign in as admin and edit World Settings to rename your world, write its description, and upload your own heightmap and hand-drawn map.",
   heightmapUrl: null,
   heightmapPublicId: null,
+  heightmapSeed: 1337,
   overlayUrl: null,
   overlayPublicId: null,
   mapWidthUnits: 100,
