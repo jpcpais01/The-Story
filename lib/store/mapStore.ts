@@ -27,6 +27,9 @@ interface MapStore {
   setHudMetrics: (metrics: { compassHeading: number; unitsPerPixel: number }) => void;
   resetHeadingRequestId: number;
   requestResetHeading: () => void;
+
+  captureRequestId: number;
+  requestMapCapture: () => void;
 }
 
 export const useMapStore = create<MapStore>((set) => ({
@@ -47,4 +50,7 @@ export const useMapStore = create<MapStore>((set) => ({
   setHudMetrics: ({ compassHeading, unitsPerPixel }) => set({ compassHeading, unitsPerPixel }),
   resetHeadingRequestId: 0,
   requestResetHeading: () => set((s) => ({ resetHeadingRequestId: s.resetHeadingRequestId + 1 })),
+
+  captureRequestId: 0,
+  requestMapCapture: () => set((s) => ({ captureRequestId: s.captureRequestId + 1 })),
 }));

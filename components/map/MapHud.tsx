@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Layers } from "lucide-react";
+import { Layers, Download } from "lucide-react";
 import { CompassRose } from "./CompassRose";
 import { ScaleBar } from "./ScaleBar";
 import { useMapStore } from "@/lib/store/mapStore";
@@ -17,9 +17,10 @@ const LEGEND_STOPS = [
   { color: "#f8f6f1", label: "Snow" },
 ];
 
-export function MapHud({ world }: { world: WorldDoc }) {
+export function MapHud({ world, editable = false }: { world: WorldDoc; editable?: boolean }) {
   const showOverlay = useMapStore((s) => s.showOverlay);
   const toggleOverlay = useMapStore((s) => s.toggleOverlay);
+  const requestMapCapture = useMapStore((s) => s.requestMapCapture);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10">
@@ -33,23 +34,38 @@ export function MapHud({ world }: { world: WorldDoc }) {
         <p className="mt-1 text-xs leading-relaxed text-stone-400">{world.tagline}</p>
       </motion.div>
 
-      {world.overlayUrl && (
-        <motion.button
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
-          type="button"
-          onClick={toggleOverlay}
-          className={`pointer-events-auto absolute right-4 top-[4.5rem] flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-medium shadow-lg backdrop-blur-md transition-colors sm:right-6 sm:top-20 ${
-            showOverlay
-              ? "border-gold-400/50 bg-gold-500/15 text-gold-300"
-              : "border-white/15 bg-stone-950/60 text-stone-300 hover:text-stone-100"
-          }`}
-        >
-          <Layers size={14} />
-          {showOverlay ? "Charted Map" : "Elevation Tint"}
-        </motion.button>
-      )}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
+        className="pointer-events-none absolute right-4 top-[4.5rem] flex flex-col items-end gap-2 sm:right-6 sm:top-20"
+      >
+        {world.overlayUrl && (
+          <button
+            type="button"
+            onClick={toggleOverlay}
+            className={`pointer-events-auto flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-medium shadow-lg backdrop-blur-md transition-colors ${
+              showOverlay
+                ? "border-gold-400/50 bg-gold-500/15 text-gold-300"
+                : "border-white/15 bg-stone-950/60 text-stone-300 hover:text-stone-100"
+            }`}
+          >
+            <Layers size={14} />
+            {showOverlay ? "Charted Map" : "Elevation Tint"}
+          </button>
+        )}
+        {editable && (
+          <button
+            type="button"
+            onClick={requestMapCapture}
+            title="Reset the view to fit the whole map and download it as a PNG"
+            className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/15 bg-stone-950/60 px-3.5 py-2 text-xs font-medium text-stone-300 shadow-lg backdrop-blur-md transition-colors hover:text-stone-100"
+          >
+            <Download size={14} />
+            Download Map
+          </button>
+        )}
+      </motion.div>
 
       <motion.div
         initial={{ opacity: 0, y: 8 }}
