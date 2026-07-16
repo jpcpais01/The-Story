@@ -11,9 +11,6 @@ interface MapStore {
   selectedSlug: string | null;
   setSelected: (slug: string | null) => void;
 
-  showOverlay: boolean;
-  toggleOverlay: () => void;
-
   placingPin: boolean;
   setPlacingPin: (value: boolean) => void;
 
@@ -31,9 +28,6 @@ interface MapStore {
 export const useMapStore = create<MapStore>((set) => ({
   selectedSlug: null,
   setSelected: (slug) => set({ selectedSlug: slug }),
-
-  showOverlay: true,
-  toggleOverlay: () => set((s) => ({ showOverlay: !s.showOverlay })),
 
   placingPin: false,
   setPlacingPin: (value) => set({ placingPin: value, pendingPin: null }),

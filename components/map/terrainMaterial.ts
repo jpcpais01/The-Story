@@ -144,12 +144,12 @@ const fragmentShader = /* glsl */ `
     vec3 normal = normalize(vNormal);
     float hillshade = clamp(dot(normal, normalize(lightDir)), 0.0, 1.0);
     hillshade = 0.55 + hillshade * 0.55; // keep tint legible, avoid pitch-black shadows
-    base *= min(hillshade, 1.15);
-
-    // Shoreline foam-ish highlight right at sea level
-    float shoreDist = abs(vElevation - seaLevel);
-    float shoreLine = 1.0 - smoothstep(0.0, 0.004, shoreDist);
-    base = mix(base, vec3(0.95, 0.94, 0.88), shoreLine * 0.5);
+    hillshade = min(hillshade, 1.15);
+    // Over a hand-drawn overlay, only let a fraction of the shading through --
+    // full strength was making uploaded artwork read as noticeably darker
+    // than the original image instead of just hinting at relief.
+    float hillshadeStrength = hasOverlay ? 0.35 : 1.0;
+    base *= mix(1.0, hillshade, hillshadeStrength);
 
     vec3 finalColor = base;
 

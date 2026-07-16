@@ -69,7 +69,6 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
   );
   const terrain = useTerrainData(world.heightmapUrl, world.heightmapSeed, world.seaLevel, aspectRatio, detail);
   const overlayTexture = useOverlayTexture(world.overlayUrl);
-  const showOverlay = useMapStore((s) => s.showOverlay);
   const placingPin = useMapStore((s) => s.placingPin);
   const setPendingPin = useMapStore((s) => s.setPendingPin);
   const setSelected = useMapStore((s) => s.setSelected);
@@ -96,7 +95,7 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
         depthUnits={world.mapDepthUnits}
         maxElevationUnits={world.maxElevationUnits}
         seaLevel={world.seaLevel}
-        overlayTexture={world.overlayUrl && showOverlay ? overlayTexture : null}
+        overlayTexture={world.overlayUrl ? overlayTexture : null}
         overlayOpacity={1}
         highlightUv={highlightUv ? { ...highlightUv, radius: 0.035 } : null}
         onSurfaceClick={

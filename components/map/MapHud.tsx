@@ -1,9 +1,10 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Layers, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { ScaleBar } from "./ScaleBar";
 import { useMapStore } from "@/lib/store/mapStore";
+import { useAdminAuth } from "@/lib/auth/useAdminAuth";
 import type { WorldDoc } from "@/types/firestore";
 
 const LEGEND_STOPS = [
@@ -17,9 +18,9 @@ const LEGEND_STOPS = [
 ];
 
 export function MapHud({ world, editable = false }: { world: WorldDoc; editable?: boolean }) {
-  const showOverlay = useMapStore((s) => s.showOverlay);
-  const toggleOverlay = useMapStore((s) => s.toggleOverlay);
   const requestMapCapture = useMapStore((s) => s.requestMapCapture);
+  const { isAdmin } = useAdminAuth();
+  const showDownload = editable && isAdmin;
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10">
@@ -33,27 +34,13 @@ export function MapHud({ world, editable = false }: { world: WorldDoc; editable?
         <p className="mt-1 text-xs leading-relaxed text-stone-400">{world.tagline}</p>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
-        className="pointer-events-none absolute right-4 top-[4.5rem] flex flex-col items-end gap-2 sm:right-6 sm:top-20"
-      >
-        {world.overlayUrl && (
-          <button
-            type="button"
-            onClick={toggleOverlay}
-            className={`pointer-events-auto flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-medium shadow-lg backdrop-blur-md transition-colors ${
-              showOverlay
-                ? "border-gold-400/50 bg-gold-500/15 text-gold-300"
-                : "border-white/15 bg-stone-950/60 text-stone-300 hover:text-stone-100"
-            }`}
-          >
-            <Layers size={14} />
-            {showOverlay ? "Charted Map" : "Elevation Tint"}
-          </button>
-        )}
-        {editable && (
+      {showDownload && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
+          className="pointer-events-none absolute right-4 top-[4.5rem] flex flex-col items-end gap-2 sm:right-6 sm:top-20"
+        >
           <button
             type="button"
             onClick={requestMapCapture}
@@ -63,8 +50,8 @@ export function MapHud({ world, editable = false }: { world: WorldDoc; editable?
             <Download size={14} />
             Download Map
           </button>
-        )}
-      </motion.div>
+        </motion.div>
+      )}
 
       <motion.div
         initial={{ opacity: 0, y: 8 }}
