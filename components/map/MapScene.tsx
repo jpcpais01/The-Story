@@ -9,6 +9,7 @@ import { Terrain } from "./Terrain";
 import { PinLayer } from "./PinLayer";
 import { HudTracker } from "./HudTracker";
 import { MapCaptureHandler } from "./MapCaptureHandler";
+import { ZoomTiltController } from "./ZoomTiltController";
 import { useTerrainData } from "@/lib/hooks/useTerrainData";
 import { useOverlayTexture } from "@/lib/hooks/useOverlayTexture";
 import { useMapStore } from "@/lib/store/mapStore";
@@ -124,6 +125,13 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
         minPolarAngle={TOP_DOWN_POLAR_ANGLE}
         maxPolarAngle={TOP_DOWN_POLAR_ANGLE}
         target={[0, 0, 0]}
+      />
+      <ZoomTiltController
+        controlsRef={controlsRef}
+        basePolarAngle={TOP_DOWN_POLAR_ANGLE}
+        tiltStartZoom={framing.initial * 1.3}
+        tiltMaxZoom={framing.max}
+        maxTiltRadians={THREE.MathUtils.degToRad(45)}
       />
       <HudTracker controlsRef={controlsRef} />
       <MapCaptureHandler widthUnits={world.mapWidthUnits} depthUnits={world.mapDepthUnits} worldName={world.name} />
