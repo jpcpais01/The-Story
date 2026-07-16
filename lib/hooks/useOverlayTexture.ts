@@ -22,7 +22,13 @@ export function useOverlayTexture(url: string | null): THREE.Texture | null {
         tex.dispose();
         return;
       }
-      tex.colorSpace = THREE.SRGBColorSpace;
+      // NoColorSpace (not SRGBColorSpace): this shader writes straight to
+      // gl_FragColor with no colorspace_fragment re-encode step (that chunk
+      // only gets auto-injected into three's built-in materials, not a raw
+      // ShaderMaterial). Flagging the texture as sRGB makes the GPU
+      // auto-linearize/darken it on sample with nothing to undo the darkening
+      // before display -- keep it raw so sampled texels match the source PNG.
+      tex.colorSpace = THREE.NoColorSpace;
       tex.needsUpdate = true;
       setTexture(tex);
     });
