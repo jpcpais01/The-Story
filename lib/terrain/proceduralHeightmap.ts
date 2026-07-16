@@ -31,9 +31,11 @@ function fbm(
  * a "round" continent feature looks round once displayed, instead of being
  * stretched to fill a non-square grid.
  *
- * The landmass shape comes from low-frequency, domain-warped noise rather
- * than a fixed radial falloff from the grid center, so land can end up
- * anywhere on the map instead of always clustering in the middle.
+ * The landmass shape comes from low-frequency, domain-warped noise, with a
+ * wide falloff margin pushing the map's outer border toward ocean so land
+ * doesn't touch the frame. Elevation itself stays purely noise-driven within
+ * that landmass -- there's no rule that the interior is always higher than
+ * the coast, just organic variation.
  */
 export function generateProceduralHeightmap(width = 512, height = 256, seed = 1337): HeightmapData {
   const shapeNoise = createNoise2D(mulberry32(seed));
@@ -56,14 +58,13 @@ export function generateProceduralHeightmap(width = 512, height = 256, seed = 13
       const wx = nx + warpNoise(nx * 1.5, ny * 1.5) * warpStrength;
       const wy = ny + warpNoise(nx * 1.5 + 50, ny * 1.5 + 50) * warpStrength;
 
-      // Continent shape: low-frequency fBm. No fixed center bias -- across
-      // different seeds, land can sit anywhere in the frame.
+      // Continent shape: low-frequency fBm for organic variation.
       const continent = fbm(shapeNoise, wx * 1.1, wy * 1.1, 4, 2.0, 0.5); // -1..1
 
-      // Gentle rectangular vignette limited to a thin margin near the literal
-      // edges, so the map still reads as a bounded landmass without pulling
-      // every seed's terrain toward the exact center.
-      const margin = 0.08;
+      // Wide rectangular vignette so a real, generous margin around the
+      // border reads as ocean, without imposing any center-vs-edge elevation
+      // rule on the interior -- that part stays purely up to the noise.
+      const margin = 0.22;
       const edgeX = smoothstep(aspect / 2, aspect / 2 - margin * aspect, Math.abs(nx));
       const edgeY = smoothstep(0.5, 0.5 - margin, Math.abs(ny));
       const edgeFalloff = edgeX * edgeY;
