@@ -5,8 +5,10 @@
 // Firebase console under Authentication -> Users):
 //   node scripts/set-admin-claim.mjs you@example.com
 
-import "dotenv/config";
+import { config } from "dotenv";
 import { cert, initializeApp } from "firebase-admin/app";
+
+config({ path: ".env.local" });
 import { getAuth } from "firebase-admin/auth";
 
 const email = process.argv[2];

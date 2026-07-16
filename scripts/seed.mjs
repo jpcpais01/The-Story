@@ -4,9 +4,11 @@
 //
 // Usage: node scripts/seed.mjs
 
-import "dotenv/config";
+import { config } from "dotenv";
 import { cert, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+
+config({ path: ".env.local" });
 
 const projectId = process.env.FIREBASE_PROJECT_ID;
 const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
