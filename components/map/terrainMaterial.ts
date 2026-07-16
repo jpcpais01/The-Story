@@ -29,7 +29,6 @@ const fragmentShader = /* glsl */ `
   uniform bool hasOverlay;
   uniform float overlayOpacity;
   uniform float seaLevel;
-  uniform float contourCount;
   uniform vec3 lightDir;
   uniform vec3 highlightUv; // xy = uv center, z = radius (negative = disabled)
   uniform float mapAspect; // widthUnits / depthUnits, for an even border erosion band
@@ -126,20 +125,17 @@ const fragmentShader = /* glsl */ `
 
   void main() {
     vec3 base;
-    float landT; // 0 underwater, 1 on land -- gates contour lines below
     if (vElevation < seaLevel) {
       base = waterColor(vElevation);
-      landT = 0.0;
     } else {
       float landElevation = (vElevation - seaLevel) / max(1.0 - seaLevel, 0.0001);
       base = landBiomeColor(landElevation, vTemperature, vHumidity);
-      landT = 1.0;
     }
 
     // The hand-drawn overlay (if any) replaces the *raw* biome color here,
-    // before any relief shading -- so hillshading/contours below apply to
-    // whichever is showing, draping real 3D elevation cues over the artwork
-    // instead of the overlay flattening/erasing them.
+    // before any relief shading -- so hillshading below applies to whichever
+    // is showing, draping real 3D elevation cues over the artwork instead of
+    // the overlay flattening/erasing them.
     if (hasOverlay) {
       vec3 overlay = texture2D(overlayMap, vUv).rgb;
       base = mix(base, overlay, overlayOpacity);
@@ -149,18 +145,6 @@ const fragmentShader = /* glsl */ `
     float hillshade = clamp(dot(normal, normalize(lightDir)), 0.0, 1.0);
     hillshade = 0.55 + hillshade * 0.55; // keep tint legible, avoid pitch-black shadows
     base *= min(hillshade, 1.15);
-
-    // Contour lines (skipped underwater, where they read as noise on flat sea).
-    // Kept subtler over the hand-drawn overlay so they read as a helpful
-    // annotation rather than competing with the artwork's own linework.
-    float bands = vElevation * contourCount;
-    float dist = abs(fract(bands - 0.5) - 0.5) * 2.0;
-    float aa = max(fwidth(bands) * 1.5, 0.0008);
-    float line = 1.0 - smoothstep(0.0, aa, dist);
-    float isMajor = step(4.5, mod(floor(bands), 5.0));
-    vec3 contourColor = mix(vec3(0.22, 0.16, 0.09), vec3(0.08, 0.05, 0.02), isMajor);
-    float contourStrength = hasOverlay ? 0.14 : 0.32;
-    base = mix(base, contourColor, line * contourStrength * landT);
 
     // Shoreline foam-ish highlight right at sea level
     float shoreDist = abs(vElevation - seaLevel);
@@ -185,7 +169,6 @@ export const TerrainMaterialImpl = shaderMaterial(
     hasOverlay: false as boolean,
     overlayOpacity: 0,
     seaLevel: 0.42,
-    contourCount: 36,
     lightDir: new THREE.Vector3(-0.45, 0.82, 0.35).normalize(),
     highlightUv: new THREE.Vector3(0, 0, -1),
     mapAspect: 2,

@@ -41,7 +41,6 @@ export function WorldSettingsForm({ world }: { world: WorldDoc }) {
       mapDepthUnits: world.mapDepthUnits,
       maxElevationUnits: world.maxElevationUnits,
       seaLevel: world.seaLevel,
-      contourIntervalCount: world.contourIntervalCount,
     },
   });
 
@@ -99,14 +98,6 @@ export function WorldSettingsForm({ world }: { world: WorldDoc }) {
         </Field>
         <Field label="Sea level (0–1)" error={errors.seaLevel?.message}>
           <input type="number" step="0.01" {...register("seaLevel", { valueAsNumber: true })} className={inputClass} />
-        </Field>
-        <Field label="Contour lines" error={errors.contourIntervalCount?.message}>
-          <input
-            type="number"
-            step="1"
-            {...register("contourIntervalCount", { valueAsNumber: true })}
-            className={inputClass}
-          />
         </Field>
       </div>
 

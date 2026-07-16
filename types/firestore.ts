@@ -36,7 +36,6 @@ export interface WorldDoc {
   mapDepthUnits: number;
   maxElevationUnits: number;
   seaLevel: number;
-  contourIntervalCount: number;
   updatedAt: number;
 }
 

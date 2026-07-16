@@ -96,7 +96,6 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
         depthUnits={world.mapDepthUnits}
         maxElevationUnits={world.maxElevationUnits}
         seaLevel={world.seaLevel}
-        contourIntervalCount={world.contourIntervalCount}
         overlayTexture={world.overlayUrl && showOverlay ? overlayTexture : null}
         overlayOpacity={1}
         highlightUv={highlightUv ? { ...highlightUv, radius: 0.035 } : null}

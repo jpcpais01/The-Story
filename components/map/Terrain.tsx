@@ -22,7 +22,6 @@ interface TerrainProps {
   depthUnits: number;
   maxElevationUnits: number;
   seaLevel: number;
-  contourIntervalCount: number;
   overlayTexture?: THREE.Texture | null;
   overlayOpacity?: number;
   segments?: number;
@@ -38,7 +37,6 @@ export function Terrain({
   depthUnits,
   maxElevationUnits,
   seaLevel,
-  contourIntervalCount,
   overlayTexture = null,
   overlayOpacity = 0,
   segments = 256,
@@ -78,7 +76,6 @@ export function Terrain({
 
   useEffect(() => {
     material.seaLevel = seaLevel;
-    material.contourCount = contourIntervalCount;
     material.overlayMap = overlayTexture;
     material.hasOverlay = Boolean(overlayTexture);
     material.overlayOpacity = overlayTexture ? overlayOpacity : 0;
@@ -86,7 +83,7 @@ export function Terrain({
     material.highlightUv = highlightUv
       ? new THREE.Vector3(highlightUv.u, highlightUv.v, highlightUv.radius)
       : new THREE.Vector3(0, 0, -1);
-  }, [material, seaLevel, contourIntervalCount, overlayTexture, overlayOpacity, widthUnits, depthUnits, highlightUv]);
+  }, [material, seaLevel, overlayTexture, overlayOpacity, widthUnits, depthUnits, highlightUv]);
 
   function handleClick(event: ThreeEvent<MouseEvent>) {
     if (!onSurfaceClick) return;

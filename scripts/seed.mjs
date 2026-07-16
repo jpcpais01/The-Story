@@ -44,7 +44,6 @@ const world = {
   mapDepthUnits: 60,
   maxElevationUnits: 9,
   seaLevel: 0.42,
-  contourIntervalCount: 36,
   updatedAt: now,
 };
 

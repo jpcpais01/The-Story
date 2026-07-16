@@ -8,7 +8,6 @@ export const worldSchema = z.object({
   mapDepthUnits: z.number().positive(),
   maxElevationUnits: z.number().positive(),
   seaLevel: z.number().min(0.05).max(0.95),
-  contourIntervalCount: z.number().int().positive(),
 });
 
 export type WorldFormValues = z.infer<typeof worldSchema>;
