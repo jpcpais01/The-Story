@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { Layers, Download } from "lucide-react";
-import { CompassRose } from "./CompassRose";
 import { ScaleBar } from "./ScaleBar";
 import { useMapStore } from "@/lib/store/mapStore";
 import type { WorldDoc } from "@/types/firestore";
@@ -82,15 +81,6 @@ export function MapHud({ world, editable = false }: { world: WorldDoc; editable?
             </div>
           ))}
         </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, scale: 0.85 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
-        className="pointer-events-auto absolute bottom-5 right-4 sm:right-6"
-      >
-        <CompassRose />
       </motion.div>
     </div>
   );

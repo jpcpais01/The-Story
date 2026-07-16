@@ -124,6 +124,9 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
         maxZoom={framing.max}
         minPolarAngle={TOP_DOWN_POLAR_ANGLE}
         maxPolarAngle={TOP_DOWN_POLAR_ANGLE}
+        enableRotate={false}
+        minAzimuthAngle={0}
+        maxAzimuthAngle={0}
         target={[0, 0, 0]}
       />
       <ZoomTiltController
@@ -133,7 +136,7 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
         tiltMaxZoom={framing.initial * 1.5}
         maxTiltRadians={THREE.MathUtils.degToRad(45)}
       />
-      <HudTracker controlsRef={controlsRef} />
+      <HudTracker />
       <MapCaptureHandler widthUnits={world.mapWidthUnits} depthUnits={world.mapDepthUnits} worldName={world.name} />
     </>
   );
