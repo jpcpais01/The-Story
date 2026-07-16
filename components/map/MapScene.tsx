@@ -8,7 +8,7 @@ import * as THREE from "three";
 import { Terrain } from "./Terrain";
 import { PinLayer } from "./PinLayer";
 import { HudTracker } from "./HudTracker";
-import { useHeightmap } from "@/lib/hooks/useHeightmap";
+import { useTerrainData } from "@/lib/hooks/useTerrainData";
 import { useOverlayTexture } from "@/lib/hooks/useOverlayTexture";
 import { useMapStore } from "@/lib/store/mapStore";
 import type { WorldDoc, LocationDoc } from "@/types/firestore";
@@ -55,7 +55,8 @@ function useTopDownFraming(desiredVisibleWidth: number): ZoomBounds | null {
 }
 
 function SceneContents({ world, locations, editable, initialSelectedSlug, highlightUv }: MapSceneProps) {
-  const heightmap = useHeightmap(world.heightmapUrl, world.heightmapSeed);
+  const aspectRatio = world.mapWidthUnits / world.mapDepthUnits;
+  const terrain = useTerrainData(world.heightmapUrl, world.heightmapSeed, world.seaLevel, aspectRatio);
   const overlayTexture = useOverlayTexture(world.overlayUrl);
   const showOverlay = useMapStore((s) => s.showOverlay);
   const placingPin = useMapStore((s) => s.placingPin);
@@ -69,7 +70,7 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSelectedSlug]);
 
-  if (!heightmap || !framing) return null;
+  if (!terrain || !framing) return null;
 
   return (
     <>
@@ -77,7 +78,9 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
       <directionalLight position={[-8, 14, 6]} intensity={0.6} />
 
       <Terrain
-        heightmap={heightmap}
+        heightmap={terrain.elevation}
+        temperatureMap={terrain.temperature}
+        humidityMap={terrain.humidity}
         widthUnits={world.mapWidthUnits}
         depthUnits={world.mapDepthUnits}
         maxElevationUnits={world.maxElevationUnits}
@@ -95,7 +98,7 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
 
       <PinLayer
         locations={locations}
-        heightmap={heightmap}
+        heightmap={terrain.elevation}
         widthUnits={world.mapWidthUnits}
         depthUnits={world.mapDepthUnits}
         maxElevationUnits={world.maxElevationUnits}

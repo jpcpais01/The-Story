@@ -5,7 +5,6 @@ import * as THREE from "three";
 import type { ThreeEvent } from "@react-three/fiber";
 import { TerrainMaterialImpl } from "./terrainMaterial";
 import { sampleHeight, type HeightmapData } from "@/lib/terrain/heightSampler";
-import { buildColorRampTexture } from "@/lib/terrain/colorRamp";
 import { toUv } from "@/lib/terrain/coords";
 
 export interface SurfacePoint {
@@ -17,6 +16,8 @@ export interface SurfacePoint {
 
 interface TerrainProps {
   heightmap: HeightmapData;
+  temperatureMap: HeightmapData;
+  humidityMap: HeightmapData;
   widthUnits: number;
   depthUnits: number;
   maxElevationUnits: number;
@@ -31,6 +32,8 @@ interface TerrainProps {
 
 export function Terrain({
   heightmap,
+  temperatureMap,
+  humidityMap,
   widthUnits,
   depthUnits,
   maxElevationUnits,
@@ -47,16 +50,22 @@ export function Terrain({
     geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position;
     const elevation = new Float32Array(pos.count);
+    const temperature = new Float32Array(pos.count);
+    const humidity = new Float32Array(pos.count);
     for (let i = 0; i < pos.count; i++) {
       const { u, v } = toUv(pos.getX(i), pos.getZ(i), widthUnits, depthUnits);
       const h = sampleHeight(heightmap, u, v);
       pos.setY(i, h * maxElevationUnits);
       elevation[i] = h;
+      temperature[i] = sampleHeight(temperatureMap, u, v);
+      humidity[i] = sampleHeight(humidityMap, u, v);
     }
     geo.setAttribute("elevation", new THREE.BufferAttribute(elevation, 1));
+    geo.setAttribute("temperature", new THREE.BufferAttribute(temperature, 1));
+    geo.setAttribute("humidity", new THREE.BufferAttribute(humidity, 1));
     geo.computeVertexNormals();
     return geo;
-  }, [heightmap, widthUnits, depthUnits, maxElevationUnits, segments]);
+  }, [heightmap, temperatureMap, humidityMap, widthUnits, depthUnits, maxElevationUnits, segments]);
 
   useEffect(() => () => geometry.dispose(), [geometry]);
 
@@ -66,11 +75,7 @@ export function Terrain({
   const material = useMemo(() => new TerrainMaterialImpl(), []);
   useEffect(() => () => material.dispose(), [material]);
 
-  const colorRamp = useMemo(() => buildColorRampTexture(seaLevel), [seaLevel]);
-  useEffect(() => () => colorRamp.dispose(), [colorRamp]);
-
   useEffect(() => {
-    material.colorRamp = colorRamp;
     material.seaLevel = seaLevel;
     material.contourCount = contourIntervalCount;
     material.overlayMap = overlayTexture;
@@ -79,7 +84,7 @@ export function Terrain({
     material.highlightUv = highlightUv
       ? new THREE.Vector3(highlightUv.u, highlightUv.v, highlightUv.radius)
       : new THREE.Vector3(0, 0, -1);
-  }, [material, colorRamp, seaLevel, contourIntervalCount, overlayTexture, overlayOpacity, highlightUv]);
+  }, [material, seaLevel, contourIntervalCount, overlayTexture, overlayOpacity, highlightUv]);
 
   function handleClick(event: ThreeEvent<MouseEvent>) {
     if (!onSurfaceClick) return;

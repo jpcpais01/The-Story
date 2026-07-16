@@ -64,7 +64,7 @@ export function ProceduralHeightmapPanel({ world, seed, onSeedChange }: Procedur
         </button>
         <button
           type="button"
-          onClick={() => downloadHeightmapImage(seed, world.name)}
+          onClick={() => downloadHeightmapImage(seed, world.name, world.mapWidthUnits / world.mapDepthUnits)}
           className="flex items-center gap-1.5 rounded-full border border-white/10 px-3.5 py-1.5 text-xs font-medium text-stone-200 hover:bg-white/5"
         >
           <Download size={14} />

@@ -13,8 +13,8 @@ export const EDITABLE = true;
 export const siteConfig = {
   worldNameFallback: "The Story",
   worldTaglineFallback: "An atlas of a world still being written.",
-  mapWidthUnits: 100,
-  mapDepthUnits: 62,
+  mapWidthUnits: 120,
+  mapDepthUnits: 60,
   maxElevationUnits: 9,
   defaultSeaLevel: 0.42,
   defaultContourIntervalCount: 36,

@@ -9,10 +9,12 @@ import type { WorldDoc } from "@/types/firestore";
 
 const LEGEND_STOPS = [
   { color: "#1f5578", label: "Ocean" },
-  { color: "#e4d9ac", label: "Shore" },
-  { color: "#6f8f4c", label: "Lowland" },
-  { color: "#a98653", label: "Highland" },
-  { color: "#f8f6f1", label: "Peak" },
+  { color: "#e4d9ac", label: "Beach" },
+  { color: "#d9b872", label: "Desert" },
+  { color: "#7ea354", label: "Grassland" },
+  { color: "#4c7a3d", label: "Forest" },
+  { color: "#8a9a7d", label: "Tundra" },
+  { color: "#f8f6f1", label: "Snow" },
 ];
 
 export function MapHud({ world }: { world: WorldDoc }) {
