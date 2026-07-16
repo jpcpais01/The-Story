@@ -136,19 +136,31 @@ const fragmentShader = /* glsl */ `
       landT = 1.0;
     }
 
+    // The hand-drawn overlay (if any) replaces the *raw* biome color here,
+    // before any relief shading -- so hillshading/contours below apply to
+    // whichever is showing, draping real 3D elevation cues over the artwork
+    // instead of the overlay flattening/erasing them.
+    if (hasOverlay) {
+      vec3 overlay = texture2D(overlayMap, vUv).rgb;
+      base = mix(base, overlay, overlayOpacity);
+    }
+
     vec3 normal = normalize(vNormal);
     float hillshade = clamp(dot(normal, normalize(lightDir)), 0.0, 1.0);
     hillshade = 0.55 + hillshade * 0.55; // keep tint legible, avoid pitch-black shadows
     base *= min(hillshade, 1.15);
 
-    // Contour lines (skipped underwater, where they read as noise on flat sea)
+    // Contour lines (skipped underwater, where they read as noise on flat sea).
+    // Kept subtler over the hand-drawn overlay so they read as a helpful
+    // annotation rather than competing with the artwork's own linework.
     float bands = vElevation * contourCount;
     float dist = abs(fract(bands - 0.5) - 0.5) * 2.0;
     float aa = max(fwidth(bands) * 1.5, 0.0008);
     float line = 1.0 - smoothstep(0.0, aa, dist);
     float isMajor = step(4.5, mod(floor(bands), 5.0));
     vec3 contourColor = mix(vec3(0.22, 0.16, 0.09), vec3(0.08, 0.05, 0.02), isMajor);
-    base = mix(base, contourColor, line * 0.32 * landT);
+    float contourStrength = hasOverlay ? 0.14 : 0.32;
+    base = mix(base, contourColor, line * contourStrength * landT);
 
     // Shoreline foam-ish highlight right at sea level
     float shoreDist = abs(vElevation - seaLevel);
@@ -156,10 +168,6 @@ const fragmentShader = /* glsl */ `
     base = mix(base, vec3(0.95, 0.94, 0.88), shoreLine * 0.5);
 
     vec3 finalColor = base;
-    if (hasOverlay) {
-      vec3 overlay = texture2D(overlayMap, vUv).rgb;
-      finalColor = mix(base, overlay, overlayOpacity);
-    }
 
     if (highlightUv.z > 0.0) {
       float d = distance(vUv, highlightUv.xy);
