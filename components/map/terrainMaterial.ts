@@ -32,6 +32,8 @@ const fragmentShader = /* glsl */ `
   uniform float contourCount;
   uniform vec3 lightDir;
   uniform vec3 highlightUv; // xy = uv center, z = radius (negative = disabled)
+  uniform float mapAspect; // widthUnits / depthUnits, for an even border erosion band
+  uniform float borderErosion; // 0 = disabled, ~0.05-0.09 = a torn-parchment edge
 
   varying vec2 vUv;
   varying float vElevation;
@@ -39,6 +41,44 @@ const fragmentShader = /* glsl */ `
   varying float vHumidity;
   varying vec3 vNormal;
   varying vec3 vWorldPosition;
+
+  // Cheap hash-based value noise, used only for the border erosion mask below.
+  float borderHash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+  }
+  float borderValueNoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    float a = borderHash(i);
+    float b = borderHash(i + vec2(1.0, 0.0));
+    float c = borderHash(i + vec2(0.0, 1.0));
+    float d = borderHash(i + vec2(1.0, 1.0));
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+  }
+  float borderNoiseFbm(vec2 p) {
+    float sum = 0.0;
+    float amp = 0.5;
+    for (int i = 0; i < 3; i++) {
+      sum += amp * borderValueNoise(p);
+      p *= 2.0;
+      amp *= 0.5;
+    }
+    return sum;
+  }
+
+  // Alpha-only mask (no color change) that ragged-fades the mesh to nothing
+  // near the frame border, like a worn parchment edge -- independent of
+  // elevation/biome, purely a function of position within the frame.
+  float borderMask() {
+    if (borderErosion <= 0.0) return 1.0;
+    float distFromEdgeX = min(vUv.x, 1.0 - vUv.x) * mapAspect;
+    float distFromEdgeY = min(vUv.y, 1.0 - vUv.y);
+    float distFromEdge = min(distFromEdgeX, distFromEdgeY);
+    float n = borderNoiseFbm(vUv * 40.0);
+    float raggedness = borderErosion * (0.4 + 0.9 * n);
+    return smoothstep(raggedness - 0.015, raggedness + 0.015, distFromEdge);
+  }
 
   vec3 waterColor(float elevation) {
     float t = clamp(elevation / max(seaLevel, 0.0001), 0.0, 1.0); // 0 deepest, 1 at shore
@@ -127,7 +167,7 @@ const fragmentShader = /* glsl */ `
       finalColor = mix(finalColor, vec3(0.98, 0.85, 0.45), clamp(ring, 0.0, 1.0) * 0.55);
     }
 
-    gl_FragColor = vec4(finalColor, 1.0);
+    gl_FragColor = vec4(finalColor, borderMask());
   }
 `;
 
@@ -140,6 +180,8 @@ export const TerrainMaterialImpl = shaderMaterial(
     contourCount: 36,
     lightDir: new THREE.Vector3(-0.45, 0.82, 0.35).normalize(),
     highlightUv: new THREE.Vector3(0, 0, -1),
+    mapAspect: 2,
+    borderErosion: 0.07,
   },
   vertexShader,
   fragmentShader

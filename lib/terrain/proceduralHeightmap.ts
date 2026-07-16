@@ -2,6 +2,24 @@ import { createNoise2D } from "simplex-noise";
 import { mulberry32, smoothstep } from "./random";
 import type { HeightmapData } from "./heightSampler";
 
+export interface TerrainDetailParams {
+  /** How strongly detail noise (mountains/hills) perturbs elevation. Default 0.25. */
+  detailWeight: number;
+  /** Detail noise frequency -- higher = smaller, more numerous bumps. Default 4.5. */
+  detailFrequency: number;
+  /** Detail noise octave count -- more layers of finer texture. Default 5. */
+  detailOctaves: number;
+  /** Detail noise lacunarity -- how much finer each added octave is. Default 2.05. */
+  detailLacunarity: number;
+}
+
+export const DEFAULT_TERRAIN_DETAIL: TerrainDetailParams = {
+  detailWeight: 0.25,
+  detailFrequency: 4.5,
+  detailOctaves: 5,
+  detailLacunarity: 2.05,
+};
+
 function fbm(
   noise2D: (x: number, y: number) => number,
   x: number,
@@ -35,12 +53,20 @@ function fbm(
  * wide falloff margin pushing the map's outer border toward ocean so land
  * doesn't touch the frame. Elevation itself stays purely noise-driven within
  * that landmass -- there's no rule that the interior is always higher than
- * the coast, just organic variation.
+ * the coast, just organic variation. `detail` controls how pronounced the
+ * mountains/hills layered on top of that base shape are.
  */
-export function generateProceduralHeightmap(width = 512, height = 256, seed = 1337): HeightmapData {
+export function generateProceduralHeightmap(
+  width = 512,
+  height = 256,
+  seed = 1337,
+  detail: TerrainDetailParams = DEFAULT_TERRAIN_DETAIL
+): HeightmapData {
   const shapeNoise = createNoise2D(mulberry32(seed));
   const warpNoise = createNoise2D(mulberry32(seed + 101));
   const detailNoise = createNoise2D(mulberry32(seed + 202));
+
+  const detailOctaves = Math.max(1, Math.round(detail.detailOctaves));
 
   const data = new Float32Array(width * height);
   const aspect = width / height;
@@ -75,10 +101,17 @@ export function generateProceduralHeightmap(width = 512, height = 256, seed = 13
       // Detail: higher-frequency fBm for mountains/hills/valleys, blended in
       // more strongly once there's already some land (keeps deep ocean floor
       // comparatively calm while giving coastlines and interiors real relief).
-      const detail = fbm(detailNoise, nx * 4.5, ny * 4.5, 5, 2.05, 0.5); // -1..1
+      const detailNoiseValue = fbm(
+        detailNoise,
+        nx * detail.detailFrequency,
+        ny * detail.detailFrequency,
+        detailOctaves,
+        detail.detailLacunarity,
+        0.5
+      ); // -1..1
       const detailInfluence = smoothstep(0.1, 0.55, landAmount);
 
-      const h = landAmount + detail * 0.25 * detailInfluence;
+      const h = landAmount + detailNoiseValue * detail.detailWeight * detailInfluence;
       data[y * width + x] = Math.min(1, Math.max(0, h));
     }
   }

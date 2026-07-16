@@ -5,28 +5,70 @@ import { Dices, Save, Download, Loader2 } from "lucide-react";
 import { MapClientBoundary } from "@/components/map/MapClientBoundary";
 import { saveWorld } from "@/lib/firestore/world.client";
 import { downloadHeightmapImage } from "@/lib/terrain/downloadHeightmapImage";
+import type { TerrainDetailParams } from "@/lib/terrain/proceduralHeightmap";
 import type { WorldDoc } from "@/types/firestore";
 
 interface ProceduralHeightmapPanelProps {
   world: WorldDoc;
   seed: number;
   onSeedChange: (seed: number) => void;
+  detail: TerrainDetailParams;
+  onDetailChange: (detail: TerrainDetailParams) => void;
 }
 
-export function ProceduralHeightmapPanel({ world, seed, onSeedChange }: ProceduralHeightmapPanelProps) {
+const DETAIL_FIELDS: {
+  key: keyof TerrainDetailParams;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+}[] = [
+  { key: "detailWeight", label: "Detail strength", min: 0.05, max: 0.6, step: 0.01 },
+  { key: "detailFrequency", label: "Detail frequency", min: 1, max: 10, step: 0.1 },
+  { key: "detailOctaves", label: "Detail octaves", min: 1, max: 8, step: 1 },
+  { key: "detailLacunarity", label: "Detail lacunarity", min: 1.3, max: 3, step: 0.05 },
+];
+
+export function ProceduralHeightmapPanel({
+  world,
+  seed,
+  onSeedChange,
+  detail,
+  onDetailChange,
+}: ProceduralHeightmapPanelProps) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const previewWorld: WorldDoc = { ...world, heightmapUrl: null, heightmapSeed: seed, overlayUrl: null };
+  const previewWorld: WorldDoc = {
+    ...world,
+    heightmapUrl: null,
+    heightmapSeed: seed,
+    overlayUrl: null,
+    terrainDetailWeight: detail.detailWeight,
+    terrainDetailFrequency: detail.detailFrequency,
+    terrainDetailOctaves: detail.detailOctaves,
+    terrainDetailLacunarity: detail.detailLacunarity,
+  };
 
   function handleReroll() {
     onSeedChange(Math.floor(Math.random() * 1_000_000));
     setSaved(false);
   }
 
-  async function handleSaveSeed() {
+  function handleDetailChange(key: keyof TerrainDetailParams, value: number) {
+    onDetailChange({ ...detail, [key]: value });
+    setSaved(false);
+  }
+
+  async function handleSave() {
     setSaving(true);
-    await saveWorld({ heightmapSeed: seed });
+    await saveWorld({
+      heightmapSeed: seed,
+      terrainDetailWeight: detail.detailWeight,
+      terrainDetailFrequency: detail.detailFrequency,
+      terrainDetailOctaves: detail.detailOctaves,
+      terrainDetailLacunarity: detail.detailLacunarity,
+    });
     setSaving(false);
     setSaved(true);
   }
@@ -44,6 +86,26 @@ export function ProceduralHeightmapPanel({ world, seed, onSeedChange }: Procedur
         <MapClientBoundary world={previewWorld} locations={[]} editable={false} />
       </div>
 
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {DETAIL_FIELDS.map((field) => (
+          <label key={field.key} className="block">
+            <span className="mb-1 flex items-center justify-between text-xs font-medium uppercase tracking-wide text-stone-500">
+              {field.label}
+              <span className="text-stone-400">{detail[field.key]}</span>
+            </span>
+            <input
+              type="range"
+              min={field.min}
+              max={field.max}
+              step={field.step}
+              value={detail[field.key]}
+              onChange={(e) => handleDetailChange(field.key, Number(e.target.value))}
+              className="w-full accent-gold-500"
+            />
+          </label>
+        ))}
+      </div>
+
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -55,26 +117,28 @@ export function ProceduralHeightmapPanel({ world, seed, onSeedChange }: Procedur
         </button>
         <button
           type="button"
-          onClick={handleSaveSeed}
+          onClick={handleSave}
           disabled={saving}
           className="flex items-center gap-1.5 rounded-full bg-gold-500 px-3.5 py-1.5 text-xs font-medium text-ink-950 hover:opacity-90 disabled:opacity-50"
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-          Save this seed
+          Save terrain settings
         </button>
         <button
           type="button"
-          onClick={() => downloadHeightmapImage(seed, world.name, world.mapWidthUnits / world.mapDepthUnits)}
+          onClick={() =>
+            downloadHeightmapImage(seed, world.name, world.mapWidthUnits / world.mapDepthUnits, 512, detail)
+          }
           className="flex items-center gap-1.5 rounded-full border border-white/10 px-3.5 py-1.5 text-xs font-medium text-stone-200 hover:bg-white/5"
         >
           <Download size={14} />
           Download grayscale image
         </button>
-        {saved && <span className="text-xs text-gold-300">Seed saved to the live map.</span>}
+        {saved && <span className="text-xs text-gold-300">Saved to the live map.</span>}
       </div>
       <p className="mt-2 text-xs text-stone-500">
-        Re-roll to explore options, then either save the seed to keep this terrain live, or download
-        the grayscale image to paint your hand-drawn map on top of before uploading it above.
+        Re-roll to explore options, adjust detail to taste, then either save to keep this terrain live,
+        or download the grayscale image to paint your hand-drawn map on top of before uploading it above.
       </p>
     </div>
   );

@@ -8,6 +8,7 @@ import { worldSchema, type WorldFormValues } from "@/lib/validation/world.schema
 import { saveWorld } from "@/lib/firestore/world.client";
 import { ImageUploadField } from "./ImageUploadField";
 import { ProceduralHeightmapPanel } from "./ProceduralHeightmapPanel";
+import type { TerrainDetailParams } from "@/lib/terrain/proceduralHeightmap";
 import type { WorldDoc, ImageRef } from "@/types/firestore";
 
 export function WorldSettingsForm({ world }: { world: WorldDoc }) {
@@ -18,6 +19,12 @@ export function WorldSettingsForm({ world }: { world: WorldDoc }) {
     world.overlayUrl ? { url: world.overlayUrl, publicId: world.overlayPublicId ?? "", width: 0, height: 0 } : null
   );
   const [seed, setSeed] = useState(world.heightmapSeed);
+  const [detail, setDetail] = useState<TerrainDetailParams>({
+    detailWeight: world.terrainDetailWeight,
+    detailFrequency: world.terrainDetailFrequency,
+    detailOctaves: world.terrainDetailOctaves,
+    detailLacunarity: world.terrainDetailLacunarity,
+  });
   const [saved, setSaved] = useState(false);
 
   const {
@@ -45,6 +52,10 @@ export function WorldSettingsForm({ world }: { world: WorldDoc }) {
       heightmapUrl: heightmap?.url ?? null,
       heightmapPublicId: heightmap?.publicId ?? null,
       heightmapSeed: seed,
+      terrainDetailWeight: detail.detailWeight,
+      terrainDetailFrequency: detail.detailFrequency,
+      terrainDetailOctaves: detail.detailOctaves,
+      terrainDetailLacunarity: detail.detailLacunarity,
       overlayUrl: overlay?.url ?? null,
       overlayPublicId: overlay?.publicId ?? null,
     });
@@ -58,7 +69,13 @@ export function WorldSettingsForm({ world }: { world: WorldDoc }) {
         <ImageUploadField value={overlay} onChange={setOverlay} label="Hand-drawn map overlay" />
       </div>
 
-      <ProceduralHeightmapPanel world={world} seed={seed} onSeedChange={setSeed} />
+      <ProceduralHeightmapPanel
+        world={world}
+        seed={seed}
+        onSeedChange={setSeed}
+        detail={detail}
+        onDetailChange={setDetail}
+      />
 
       <Field label="World name" error={errors.name?.message}>
         <input {...register("name")} className={inputClass} />

@@ -72,7 +72,8 @@ export function Terrain({
   // Mutated imperatively below via uniform properties -- the standard three.js/R3F
   // pattern (drei's own material helpers do the same). See eslint.config.mjs for
   // why react-hooks/immutability is disabled in this directory.
-  const material = useMemo(() => new TerrainMaterialImpl(), []);
+  // `transparent: true` is required for the ragged border-erosion alpha mask.
+  const material = useMemo(() => new TerrainMaterialImpl({ transparent: true }), []);
   useEffect(() => () => material.dispose(), [material]);
 
   useEffect(() => {
@@ -81,10 +82,11 @@ export function Terrain({
     material.overlayMap = overlayTexture;
     material.hasOverlay = Boolean(overlayTexture);
     material.overlayOpacity = overlayTexture ? overlayOpacity : 0;
+    material.mapAspect = widthUnits / depthUnits;
     material.highlightUv = highlightUv
       ? new THREE.Vector3(highlightUv.u, highlightUv.v, highlightUv.radius)
       : new THREE.Vector3(0, 0, -1);
-  }, [material, seaLevel, contourIntervalCount, overlayTexture, overlayOpacity, highlightUv]);
+  }, [material, seaLevel, contourIntervalCount, overlayTexture, overlayOpacity, widthUnits, depthUnits, highlightUv]);
 
   function handleClick(event: ThreeEvent<MouseEvent>) {
     if (!onSurfaceClick) return;

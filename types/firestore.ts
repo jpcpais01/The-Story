@@ -22,6 +22,14 @@ export interface WorldDoc {
   heightmapPublicId: string | null;
   /** Seed for the procedural placeholder terrain, used whenever heightmapUrl is null. */
   heightmapSeed: number;
+  /** How strongly detail noise (mountains/hills) perturbs elevation. Default 0.25. */
+  terrainDetailWeight: number;
+  /** Detail noise frequency -- higher = smaller, more numerous bumps. Default 4.5. */
+  terrainDetailFrequency: number;
+  /** Detail noise octave count -- more layers of finer texture. Default 5. */
+  terrainDetailOctaves: number;
+  /** Detail noise lacunarity -- how much finer each added octave is. Default 2.05. */
+  terrainDetailLacunarity: number;
   overlayUrl: string | null;
   overlayPublicId: string | null;
   mapWidthUnits: number;

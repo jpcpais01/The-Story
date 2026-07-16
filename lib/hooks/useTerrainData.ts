@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { generateProceduralHeightmap } from "@/lib/terrain/proceduralHeightmap";
+import { generateProceduralHeightmap, type TerrainDetailParams } from "@/lib/terrain/proceduralHeightmap";
 import { loadHeightmapFromUrl } from "@/lib/terrain/loadHeightmapFromImage";
 import { generateClimate } from "@/lib/terrain/climateGenerator";
 import type { HeightmapData } from "@/lib/terrain/heightSampler";
@@ -26,13 +26,14 @@ export function useTerrainData(
   heightmapUrl: string | null,
   seed: number,
   seaLevel: number,
-  aspectRatio: number
+  aspectRatio: number,
+  detail: TerrainDetailParams
 ): TerrainData | null {
   const gridWidth = Math.max(2, Math.round(GRID_HEIGHT * aspectRatio));
 
   const procedural = useMemo(
-    () => generateProceduralHeightmap(gridWidth, GRID_HEIGHT, seed),
-    [gridWidth, seed]
+    () => generateProceduralHeightmap(gridWidth, GRID_HEIGHT, seed, detail),
+    [gridWidth, seed, detail]
   );
   const [uploaded, setUploaded] = useState<HeightmapData | null>(null);
   const [loadedUrl, setLoadedUrl] = useState<string | null>(null);

@@ -1,4 +1,4 @@
-import { generateProceduralHeightmap } from "./proceduralHeightmap";
+import { generateProceduralHeightmap, DEFAULT_TERRAIN_DETAIL, type TerrainDetailParams } from "./proceduralHeightmap";
 
 /**
  * Renders the procedural heightmap for `seed` to a flat grayscale PNG and
@@ -16,10 +16,11 @@ export function downloadHeightmapImage(
   seed: number,
   worldName: string,
   aspectRatio = 2,
-  height = 512
+  height = 512,
+  detail: TerrainDetailParams = DEFAULT_TERRAIN_DETAIL
 ): void {
   const width = Math.max(2, Math.round(height * aspectRatio));
-  const heightmap = generateProceduralHeightmap(width, height, seed);
+  const heightmap = generateProceduralHeightmap(width, height, seed, detail);
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;

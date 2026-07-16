@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { MapControls } from "@react-three/drei";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
@@ -56,7 +56,16 @@ function useTopDownFraming(desiredVisibleWidth: number): ZoomBounds | null {
 
 function SceneContents({ world, locations, editable, initialSelectedSlug, highlightUv }: MapSceneProps) {
   const aspectRatio = world.mapWidthUnits / world.mapDepthUnits;
-  const terrain = useTerrainData(world.heightmapUrl, world.heightmapSeed, world.seaLevel, aspectRatio);
+  const detail = useMemo(
+    () => ({
+      detailWeight: world.terrainDetailWeight,
+      detailFrequency: world.terrainDetailFrequency,
+      detailOctaves: world.terrainDetailOctaves,
+      detailLacunarity: world.terrainDetailLacunarity,
+    }),
+    [world.terrainDetailWeight, world.terrainDetailFrequency, world.terrainDetailOctaves, world.terrainDetailLacunarity]
+  );
+  const terrain = useTerrainData(world.heightmapUrl, world.heightmapSeed, world.seaLevel, aspectRatio, detail);
   const overlayTexture = useOverlayTexture(world.overlayUrl);
   const showOverlay = useMapStore((s) => s.showOverlay);
   const placingPin = useMapStore((s) => s.placingPin);
