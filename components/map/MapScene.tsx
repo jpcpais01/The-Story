@@ -130,7 +130,7 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
         controlsRef={controlsRef}
         basePolarAngle={TOP_DOWN_POLAR_ANGLE}
         tiltStartZoom={framing.initial * 1.3}
-        tiltMaxZoom={framing.max}
+        tiltMaxZoom={framing.initial * 1.5}
         maxTiltRadians={THREE.MathUtils.degToRad(45)}
       />
       <HudTracker controlsRef={controlsRef} />
