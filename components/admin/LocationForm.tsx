@@ -11,6 +11,7 @@ import { locationsClient } from "@/lib/firestore/locations.client";
 import { ImageUploadField } from "./ImageUploadField";
 import { RelationPicker } from "./RelationPicker";
 import { LocationMapPicker } from "./LocationMapPicker";
+import { SectionsEditor } from "./SectionsEditor";
 import { LOCATION_TYPES } from "@/types/firestore";
 import type { LocationDoc, WorldDoc, ImageRef } from "@/types/firestore";
 
@@ -43,6 +44,7 @@ export function LocationForm({ world, existingLocations, civilizationOptions, ev
       type: location?.type ?? "city",
       summary: location?.summary ?? "",
       description: location?.description ?? "",
+      sections: location?.sections ?? [],
       u: location?.u ?? 0.5,
       v: location?.v ?? 0.5,
       relatedCivilizationSlugs: location?.relatedCivilizationSlugs ?? [],
@@ -102,6 +104,11 @@ export function LocationForm({ world, existingLocations, civilizationOptions, ev
       <Field label="Description" error={errors.description?.message}>
         <textarea {...register("description")} rows={5} className={inputClass} />
       </Field>
+
+      <div>
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-stone-500">Sections</p>
+        <SectionsEditor control={control} name="sections" />
+      </div>
 
       <Controller
         control={control}

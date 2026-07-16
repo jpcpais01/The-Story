@@ -57,6 +57,7 @@ const locations = [
     summary: "A harbor capital built into the cliffs of the Sundered Coast.",
     description: "Sample location -- edit or delete me from the admin panel.",
     coverImage: null,
+    sections: [],
     relatedCivilizationSlugs: ["the-tidebound"],
     relatedEventSlugs: ["the-long-landing"],
     createdAt: now,

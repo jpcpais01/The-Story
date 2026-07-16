@@ -40,6 +40,7 @@ export const seedLocations: LocationDoc[] = [
     description:
       "Haven Reach is a sample location. Open it in the admin panel to replace this text, move its pin by clicking the map, or link it to a civilization and event.",
     coverImage: null,
+    sections: [],
     relatedCivilizationSlugs: ["the-tidebound"],
     relatedEventSlugs: ["the-long-landing"],
     createdAt: now,
@@ -55,6 +56,7 @@ export const seedLocations: LocationDoc[] = [
     description:
       "Another sample pin, placed higher in the terrain's elevation to show how markers sit on the relief. Replace freely.",
     coverImage: null,
+    sections: [],
     relatedCivilizationSlugs: [],
     relatedEventSlugs: ["the-long-landing"],
     createdAt: now,
@@ -70,6 +72,7 @@ export const seedLocations: LocationDoc[] = [
     description:
       "A third sample pin near sea level, to show the lowland end of the elevation palette.",
     coverImage: null,
+    sections: [],
     relatedCivilizationSlugs: [],
     relatedEventSlugs: [],
     createdAt: now,

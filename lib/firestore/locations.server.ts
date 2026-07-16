@@ -4,11 +4,17 @@ import { adminDb, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 import { devStore } from "@/lib/dev-store/store";
 import type { LocationDoc } from "@/types/firestore";
 
+// `sections` merges over a default -- existing docs saved before that field
+// existed lack it entirely, and every consumer (SectionRenderer) assumes an array.
+function withDefaults(data: LocationDoc): LocationDoc {
+  return { ...data, sections: data.sections ?? [] };
+}
+
 const getCachedLocations = isFirebaseAdminConfigured
   ? unstable_cache(
       async (): Promise<LocationDoc[]> => {
         const snap = await adminDb!.collection("locations").get();
-        return snap.docs.map((d) => d.data() as LocationDoc);
+        return snap.docs.map((d) => withDefaults(d.data() as LocationDoc));
       },
       ["locations-list"],
       { tags: ["locations"], revalidate: 3600 }
@@ -25,7 +31,7 @@ export async function getLocation(slug: string): Promise<LocationDoc | null> {
     const getCached = unstable_cache(
       async (): Promise<LocationDoc | null> => {
         const snap = await adminDb!.collection("locations").doc(slug).get();
-        return snap.exists ? (snap.data() as LocationDoc) : null;
+        return snap.exists ? withDefaults(snap.data() as LocationDoc) : null;
       },
       [`location-${slug}`],
       { tags: ["locations", `location:${slug}`], revalidate: 3600 }

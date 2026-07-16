@@ -7,6 +7,7 @@ import { getCivilization } from "@/lib/firestore/civilizations.server";
 import { getEvent } from "@/lib/firestore/events.server";
 import { RelatedEntries, type RelatedItem } from "@/components/codex/RelatedEntries";
 import { CodexImage } from "@/components/codex/CodexImage";
+import { SectionRenderer } from "@/components/codex/SectionRenderer";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -71,6 +72,12 @@ export default async function LocationPage({ params }: PageProps) {
           {location.description}
         </p>
       </div>
+
+      {location.sections.length > 0 && (
+        <div className="mt-10 border-t border-white/10 pt-10">
+          <SectionRenderer sections={location.sections} />
+        </div>
+      )}
 
       {related.length > 0 && (
         <div className="mt-12 border-t border-white/10 pt-8">

@@ -52,6 +52,7 @@ export interface LocationDoc {
   summary: string;
   description: string;
   coverImage?: ImageRef | null;
+  sections: Section[];
   relatedCivilizationSlugs: string[];
   relatedEventSlugs: string[];
   createdAt: number;

@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { LOCATION_TYPES } from "@/types/firestore";
+import { sectionSchema } from "./shared.schema";
 
 export const locationSchema = z.object({
   name: z.string().min(1, "Name is required"),
   type: z.enum(LOCATION_TYPES),
   summary: z.string().min(1, "A short summary is required"),
   description: z.string().min(1, "A description is required"),
+  sections: z.array(sectionSchema),
   u: z.number().min(0).max(1),
   v: z.number().min(0).max(1),
   relatedCivilizationSlugs: z.array(z.string()),
