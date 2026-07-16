@@ -126,7 +126,7 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
         target={[0, 0, 0]}
       />
       <HudTracker controlsRef={controlsRef} />
-      <MapCaptureHandler controlsRef={controlsRef} fitZoom={framing.initial} worldName={world.name} />
+      <MapCaptureHandler widthUnits={world.mapWidthUnits} depthUnits={world.mapDepthUnits} worldName={world.name} />
     </>
   );
 }
@@ -138,7 +138,7 @@ export default function MapScene(props: MapSceneProps) {
       shadows={false}
       dpr={[1, 2]}
       camera={{ position: [0, 60, 0.01], zoom: 10, near: 0.1, far: 500 }}
-      gl={{ antialias: true, preserveDrawingBuffer: true }}
+      gl={{ antialias: true }}
     >
       <color attach="background" args={["#0b1520"]} />
       <Suspense fallback={null}>
