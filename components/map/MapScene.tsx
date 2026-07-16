@@ -40,7 +40,7 @@ interface ZoomBounds {
 const COVER_OVERSCAN = 1.14;
 
 // Once zoomed in this far past the cover-fit zoom, city pins start appearing.
-const PIN_REVEAL_ZOOM_FACTOR = 1.15;
+const PIN_REVEAL_ZOOM_FACTOR = 1.8;
 
 /**
  * Computes an orthographic zoom so the map fully covers the viewport --

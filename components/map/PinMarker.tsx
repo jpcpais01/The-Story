@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { Landmark, Castle, MapPin, Mountain, Waves } from "lucide-react";
 import { useMapStore } from "@/lib/store/mapStore";
+import { CodexImage } from "@/components/codex/CodexImage";
 import type { LocationDoc } from "@/types/firestore";
 
 const ICONS: Record<LocationDoc["type"], typeof MapPin> = {
@@ -55,17 +56,31 @@ export function PinMarker({ location, position }: PinMarkerProps) {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: -4 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
-              className="pointer-events-auto absolute left-1/2 top-full z-10 mt-2 w-64 -translate-x-1/2 rounded-xl border border-white/15 bg-stone-950/90 p-4 text-left shadow-2xl backdrop-blur-md"
+              className="pointer-events-auto absolute left-1/2 top-full z-10 mt-2 w-64 -translate-x-1/2 overflow-hidden rounded-xl border border-white/15 bg-stone-950/90 text-left shadow-2xl backdrop-blur-md"
             >
-              <p className="font-display text-sm font-semibold text-amber-200">{location.name}</p>
-              <p className="mt-1 text-xs capitalize text-stone-400">{location.type}</p>
-              <p className="mt-2 text-xs leading-relaxed text-stone-300">{location.summary}</p>
-              <Link
-                href={`/codex/locations/${location.slug}`}
-                className="mt-3 inline-block text-xs font-medium text-amber-300 hover:text-amber-200"
-              >
-                View full entry →
-              </Link>
+              {location.coverImage && (
+                <div className="relative h-20 w-full">
+                  <CodexImage
+                    image={location.coverImage}
+                    alt={location.coverImage.alt || location.name}
+                    sizes="256px"
+                    className="object-cover"
+                  />
+                </div>
+              )}
+              <div className="p-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="truncate font-display text-sm font-semibold text-amber-200">{location.name}</p>
+                  <p className="shrink-0 text-[10px] capitalize text-stone-400">{location.type}</p>
+                </div>
+                <p className="mt-1.5 line-clamp-2 text-xs leading-snug text-stone-300">{location.summary}</p>
+                <Link
+                  href={`/codex/locations/${location.slug}`}
+                  className="mt-2 inline-block text-xs font-medium text-amber-300 hover:text-amber-200"
+                >
+                  View full entry →
+                </Link>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
