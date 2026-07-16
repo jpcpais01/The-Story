@@ -5,7 +5,6 @@ import { Download } from "lucide-react";
 import { ScaleBar } from "./ScaleBar";
 import { useMapStore } from "@/lib/store/mapStore";
 import { useAdminAuth } from "@/lib/auth/useAdminAuth";
-import type { WorldDoc } from "@/types/firestore";
 
 const LEGEND_STOPS = [
   { color: "#1f5578", label: "Ocean" },
@@ -17,23 +16,13 @@ const LEGEND_STOPS = [
   { color: "#f8f6f1", label: "Snow" },
 ];
 
-export function MapHud({ world, editable = false }: { world: WorldDoc; editable?: boolean }) {
+export function MapHud({ editable = false }: { editable?: boolean }) {
   const requestMapCapture = useMapStore((s) => s.requestMapCapture);
   const { isAdmin } = useAdminAuth();
   const showDownload = editable && isAdmin;
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10">
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="pointer-events-auto absolute left-4 top-[4.5rem] max-w-xs rounded-xl border border-white/10 bg-stone-950/55 p-4 backdrop-blur-md sm:left-6 sm:top-20"
-      >
-        <p className="font-display text-lg text-parchment-100">{world.name}</p>
-        <p className="mt-1 text-xs leading-relaxed text-stone-400">{world.tagline}</p>
-      </motion.div>
-
       {showDownload && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}

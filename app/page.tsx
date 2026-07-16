@@ -19,7 +19,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         editable={EDITABLE}
         initialSelectedSlug={params.focus ?? null}
       />
-      <MapHud world={world} editable={EDITABLE} />
+      <MapHud editable={EDITABLE} />
     </main>
   );
 }

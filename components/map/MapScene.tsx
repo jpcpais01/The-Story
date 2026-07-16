@@ -33,21 +33,35 @@ interface ZoomBounds {
   max: number;
 }
 
-/** Computes an orthographic zoom so `desiredVisibleWidth` world units are framed on load. */
-function useTopDownFraming(desiredVisibleWidth: number): ZoomBounds | null {
+// Tiny overscan so floating-point rounding / edge antialiasing never exposes
+// a hairline of background at the frame's edge.
+const COVER_OVERSCAN = 1.02;
+
+// Once zoomed in this far past the cover-fit zoom, city pins start appearing.
+const PIN_REVEAL_ZOOM_FACTOR = 1.15;
+
+/**
+ * Computes an orthographic zoom so the map fully covers the viewport --
+ * like CSS `background-size: cover` -- so no background shows on any screen
+ * shape (desktop or mobile), cropping whichever axis is less constrained
+ * instead of letterboxing it. `min` is pinned to this same zoom so the user
+ * can't zoom out past full coverage either.
+ */
+function useTopDownFraming(widthUnits: number, depthUnits: number): ZoomBounds | null {
   const camera = useThree((state) => state.camera);
   const size = useThree((state) => state.size);
   const [bounds, setBounds] = useState<ZoomBounds | null>(null);
 
   useEffect(() => {
     if (!(camera instanceof THREE.OrthographicCamera)) return;
-    const initial = size.width / desiredVisibleWidth;
+    const coverZoom = Math.max(size.width / widthUnits, size.height / depthUnits);
+    const initial = coverZoom * COVER_OVERSCAN;
     camera.zoom = initial;
     camera.updateProjectionMatrix();
     // Synchronizing with an external system (the three.js camera) -- bounds
     // derive from the same one-time measurement, so they're set here too.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setBounds({ initial, min: initial * 0.35, max: initial * 8 });
+    setBounds({ initial, min: initial, max: initial * 8 });
     // Only frame once on mount -- resizing the window should reveal more/less
     // map at a constant zoom level, like any map app, not rescale the world.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -73,7 +87,7 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
   const setPendingPin = useMapStore((s) => s.setPendingPin);
   const setSelected = useMapStore((s) => s.setSelected);
   const controlsRef = useRef<MapControlsImpl | null>(null);
-  const framing = useTopDownFraming(Math.max(world.mapWidthUnits, world.mapDepthUnits) * 1.3);
+  const framing = useTopDownFraming(world.mapWidthUnits, world.mapDepthUnits);
 
   useEffect(() => {
     if (initialSelectedSlug) setSelected(initialSelectedSlug);
@@ -101,7 +115,7 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
         onSurfaceClick={
           editable && placingPin
             ? (point) => setPendingPin({ u: point.u, v: point.v })
-            : undefined
+            : () => setSelected(null)
         }
       />
 
@@ -111,6 +125,7 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
         widthUnits={world.mapWidthUnits}
         depthUnits={world.mapDepthUnits}
         maxElevationUnits={world.maxElevationUnits}
+        minZoomToShow={framing.initial * PIN_REVEAL_ZOOM_FACTOR}
       />
 
       <MapControls
