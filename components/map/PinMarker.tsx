@@ -28,7 +28,10 @@ export function PinMarker({ location, position }: PinMarkerProps) {
 
   return (
     <Html position={position} center occlude={false} zIndexRange={[10, 0]}>
-      <div className="pointer-events-none flex -translate-y-1/2 flex-col items-center">
+      {/* relative + only the button in normal flow: the dropdown below is
+          absolutely positioned so it can't grow this box and shift where
+          drei re-centers the whole overlay on the anchor point. */}
+      <div className="pointer-events-none relative flex -translate-y-1/2 flex-col items-center">
         <button
           type="button"
           onClick={(e) => {
@@ -48,11 +51,11 @@ export function PinMarker({ location, position }: PinMarkerProps) {
         <AnimatePresence>
           {isSelected && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: -6 }}
+              initial={{ opacity: 0, scale: 0.96, y: -4 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: -6 }}
-              transition={{ duration: 0.18, ease: "easeOut" }}
-              className="pointer-events-auto mt-2 w-64 rounded-xl border border-white/15 bg-stone-950/90 p-4 text-left shadow-2xl backdrop-blur-md"
+              exit={{ opacity: 0, scale: 0.96, y: -4 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className="pointer-events-auto absolute left-1/2 top-full z-10 mt-2 w-64 -translate-x-1/2 rounded-xl border border-white/15 bg-stone-950/90 p-4 text-left shadow-2xl backdrop-blur-md"
             >
               <p className="font-display text-sm font-semibold text-amber-200">{location.name}</p>
               <p className="mt-1 text-xs capitalize text-stone-400">{location.type}</p>

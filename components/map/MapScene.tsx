@@ -10,6 +10,7 @@ import { PinLayer } from "./PinLayer";
 import { HudTracker } from "./HudTracker";
 import { MapCaptureHandler } from "./MapCaptureHandler";
 import { ZoomTiltController } from "./ZoomTiltController";
+import { PanBoundsController } from "./PanBoundsController";
 import { useTerrainData } from "@/lib/hooks/useTerrainData";
 import { useOverlayTexture } from "@/lib/hooks/useOverlayTexture";
 import { useMapStore } from "@/lib/store/mapStore";
@@ -33,9 +34,11 @@ interface ZoomBounds {
   max: number;
 }
 
-// Tiny overscan so floating-point rounding / edge antialiasing never exposes
-// a hairline of background at the frame's edge.
-const COVER_OVERSCAN = 1.02;
+// Overscan past exact cover-fit. The terrain's border-erosion mask fades the
+// mesh's own alpha to transparent over roughly its outer 3-9% (see
+// borderMask() in terrainMaterial.ts), independent of camera framing -- this
+// needs to be large enough to crop past that ragged band, not just rounding.
+const COVER_OVERSCAN = 1.14;
 
 // Once zoomed in this far past the cover-fit zoom, city pins start appearing.
 const PIN_REVEAL_ZOOM_FACTOR = 1.15;
@@ -148,6 +151,11 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
         tiltStartZoom={framing.initial * 1.3}
         tiltMaxZoom={framing.initial * 1.5}
         maxTiltRadians={THREE.MathUtils.degToRad(45)}
+      />
+      <PanBoundsController
+        controlsRef={controlsRef}
+        widthUnits={world.mapWidthUnits}
+        depthUnits={world.mapDepthUnits}
       />
       <HudTracker />
       <MapCaptureHandler widthUnits={world.mapWidthUnits} depthUnits={world.mapDepthUnits} worldName={world.name} />
