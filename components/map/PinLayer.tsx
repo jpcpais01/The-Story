@@ -16,6 +16,8 @@ interface PinLayerProps {
   maxElevationUnits: number;
   /** Camera zoom at/above which all city pins become visible. */
   minZoomToShow: number;
+  /** Camera zoom at/above which region pins become visible (regions reveal earlier than cities). */
+  minZoomToShowRegion: number;
 }
 
 export function PinLayer({
@@ -25,19 +27,26 @@ export function PinLayer({
   depthUnits,
   maxElevationUnits,
   minZoomToShow,
+  minZoomToShowRegion,
 }: PinLayerProps) {
   const camera = useThree((state) => state.camera);
   const selectedSlug = useMapStore((s) => s.selectedSlug);
-  const [allVisible, setAllVisible] = useState(false);
+  const [citiesVisible, setCitiesVisible] = useState(false);
+  const [regionsVisible, setRegionsVisible] = useState(false);
 
   useFrame(() => {
-    const next = camera.zoom >= minZoomToShow;
-    if (next !== allVisible) setAllVisible(next);
+    const nextCities = camera.zoom >= minZoomToShow;
+    if (nextCities !== citiesVisible) setCitiesVisible(nextCities);
+    const nextRegions = camera.zoom >= minZoomToShowRegion;
+    if (nextRegions !== regionsVisible) setRegionsVisible(nextRegions);
   });
 
-  // Below the reveal threshold, keep only the selected pin (if any) so a
-  // deep link (e.g. "View on Atlas" from a Codex page) still shows its pin.
-  const shown = allVisible ? locations : locations.filter((l) => l.slug === selectedSlug);
+  // Below each type's reveal threshold, keep only the selected pin (if any)
+  // so a deep link (e.g. "View on Atlas" from a Codex page) still shows its pin.
+  const shown = locations.filter((l) => {
+    if (l.slug === selectedSlug) return true;
+    return l.type === "region" ? regionsVisible : citiesVisible;
+  });
 
   return (
     <group>

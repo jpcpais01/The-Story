@@ -42,6 +42,11 @@ const COVER_OVERSCAN = 1.14;
 // Once zoomed in this far past the cover-fit zoom, city pins start appearing.
 const PIN_REVEAL_ZOOM_FACTOR = 1.8;
 
+// Regions are ethereal, world-shaping labels rather than discrete places, so
+// they should already be legible at the initial cover-fit framing, well
+// before cities/landmarks earn their reveal.
+const REGION_REVEAL_ZOOM_FACTOR = 1.0;
+
 /**
  * Computes an orthographic zoom so the map fully covers the viewport --
  * like CSS `background-size: cover` -- so no background shows on any screen
@@ -128,6 +133,7 @@ function SceneContents({ world, locations, editable, initialSelectedSlug, highli
         depthUnits={world.mapDepthUnits}
         maxElevationUnits={world.maxElevationUnits}
         minZoomToShow={framing.initial * PIN_REVEAL_ZOOM_FACTOR}
+        minZoomToShowRegion={framing.initial * REGION_REVEAL_ZOOM_FACTOR}
       />
 
       <MapControls

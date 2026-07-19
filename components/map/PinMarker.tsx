@@ -21,33 +21,74 @@ interface PinMarkerProps {
   position: [number, number, number];
 }
 
+// Radial fade used so regions read as a soft area of influence instead of a
+// hard-edged badge -- the mask, not just opacity, is what vanishes the edges.
+const REGION_FADE_MASK =
+  "radial-gradient(ellipse 65% 60% at center, black 30%, transparent 88%)";
+
 export function PinMarker({ location, position }: PinMarkerProps) {
   const selectedSlug = useMapStore((s) => s.selectedSlug);
   const setSelected = useMapStore((s) => s.setSelected);
   const isSelected = selectedSlug === location.slug;
   const Icon = ICONS[location.type];
+  const isRegion = location.type === "region";
 
   return (
-    <Html position={position} center occlude={false} zIndexRange={[10, 0]}>
+    <Html position={position} center occlude={false} zIndexRange={isRegion ? [5, 0] : [10, 0]}>
       {/* relative + only the button in normal flow: the dropdown below is
           absolutely positioned so it can't grow this box and shift where
           drei re-centers the whole overlay on the anchor point. */}
       <div className="pointer-events-none relative flex -translate-y-1/2 flex-col items-center">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setSelected(isSelected ? null : location.slug);
-          }}
-          className={`pointer-events-auto group flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium shadow-lg backdrop-blur-md transition-all duration-150 ${
-            isSelected
-              ? "scale-110 border-amber-300/80 bg-amber-400/90 text-stone-900"
-              : "border-white/25 bg-stone-900/60 text-stone-100 hover:scale-105 hover:border-amber-300/60 hover:bg-stone-900/80"
-          }`}
-        >
-          <Icon size={13} strokeWidth={2} />
-          <span className="whitespace-nowrap font-display tracking-wide">{location.name}</span>
-        </button>
+        {isRegion ? (
+          <motion.button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelected(isSelected ? null : location.slug);
+            }}
+            animate={{ opacity: isSelected ? 1 : [0.5, 0.85, 0.5] }}
+            transition={
+              isSelected ? { duration: 0.2 } : { duration: 5, repeat: Infinity, ease: "easeInOut" }
+            }
+            className="pointer-events-auto group relative flex items-center gap-2 px-7 py-4"
+          >
+            <span
+              aria-hidden
+              className="absolute inset-0 -z-10 bg-sky-400/10 blur-xl"
+              style={{ maskImage: REGION_FADE_MASK, WebkitMaskImage: REGION_FADE_MASK }}
+            />
+            <Icon
+              size={15}
+              strokeWidth={1.5}
+              className={isSelected ? "text-sky-100" : "text-sky-200/80"}
+              style={{ filter: "drop-shadow(0 0 6px rgba(125, 211, 252, 0.65))" }}
+            />
+            <span
+              className={`whitespace-nowrap font-display text-xs font-medium uppercase tracking-[0.25em] ${
+                isSelected ? "text-sky-100" : "text-sky-200/80"
+              }`}
+              style={{ textShadow: "0 0 12px rgba(125, 211, 252, 0.6)" }}
+            >
+              {location.name}
+            </span>
+          </motion.button>
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelected(isSelected ? null : location.slug);
+            }}
+            className={`pointer-events-auto group flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium shadow-lg backdrop-blur-md transition-all duration-150 ${
+              isSelected
+                ? "scale-110 border-amber-300/80 bg-amber-400/90 text-stone-900"
+                : "border-white/25 bg-stone-900/60 text-stone-100 hover:scale-105 hover:border-amber-300/60 hover:bg-stone-900/80"
+            }`}
+          >
+            <Icon size={13} strokeWidth={2} />
+            <span className="whitespace-nowrap font-display tracking-wide">{location.name}</span>
+          </button>
+        )}
 
         <AnimatePresence>
           {isSelected && (
