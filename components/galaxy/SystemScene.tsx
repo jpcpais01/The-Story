@@ -7,16 +7,22 @@ import { OrbitControls, Html, Line } from "@react-three/drei";
 import * as THREE from "three";
 import { Compass, Moon as MoonIcon } from "lucide-react";
 import { Starfield } from "./Starfield";
+import { CreateWorldButton } from "./CreateWorldButton";
 import { generateSystem, type MoonSpec, type PlanetSpec, type SystemSpec } from "@/lib/galaxy/generator";
 import { createPlanetTexture, createRingTexture, createGlowTexture } from "@/lib/galaxy/planetTexture";
 import { mulberry32 } from "@/lib/terrain/random";
 import type { GalaxyStars } from "@/lib/galaxy/generator";
 
 interface SystemSceneProps {
+  systemId: string;
   systemSeed: number;
   systemName: string;
   /** The Atlas world's name when this is the home system, else null. */
   homeWorldName: string | null;
+  /** Worlds already created from this system's planets: planetName -> world. */
+  planetWorlds: Record<string, { id: string; name: string }>;
+  /** Whether this deploy shows admin affordances (Create world). */
+  editable: boolean;
 }
 
 const ARCHETYPE_LABELS: Record<PlanetSpec["archetype"], string> = {
@@ -119,11 +125,18 @@ function Planet({
   selectedName,
   onSelect,
   bodyRefs,
+  systemId,
+  world,
+  editable,
 }: {
   planet: PlanetSpec;
   selectedName: string | null;
   onSelect: (name: string | null) => void;
   bodyRefs: BodyRefs;
+  systemId: string;
+  /** The world created from this planet, if any. */
+  world: { id: string; name: string } | null;
+  editable: boolean;
 }) {
   const orbitRef = useRef<THREE.Group>(null);
   const spinRef = useRef<THREE.Mesh>(null);
@@ -211,7 +224,7 @@ function Planet({
                   : `${planet.moons.length} moon${planet.moons.length > 1 ? "s" : ""}`}
                 {planet.rings && " · Ringed"}
               </p>
-              {planet.isHomeWorld && (
+              {planet.isHomeWorld ? (
                 <Link
                   href="/"
                   className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-gold-400/40 px-3 py-1.5 text-xs font-medium text-gold-300 transition-colors hover:border-gold-300 hover:text-gold-200"
@@ -219,7 +232,19 @@ function Planet({
                   <Compass size={12} />
                   Enter the Atlas
                 </Link>
-              )}
+              ) : world ? (
+                <Link
+                  href={`/world/${world.id}`}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-gold-400/40 px-3 py-1.5 text-xs font-medium text-gold-300 transition-colors hover:border-gold-300 hover:text-gold-200"
+                >
+                  <Compass size={12} />
+                  Enter {world.name}
+                </Link>
+              ) : editable ? (
+                <div className="mt-2">
+                  <CreateWorldButton systemId={systemId} planetName={planet.name} />
+                </div>
+              ) : null}
             </div>
           </div>
         </Html>
@@ -389,9 +414,12 @@ function FocusController({
 }
 
 function SceneContents({
+  systemId,
   systemSeed,
   systemName,
   homeWorldName,
+  planetWorlds,
+  editable,
   selectedName,
   onSelect,
 }: SystemSceneProps & { selectedName: string | null; onSelect: (name: string | null) => void }) {
@@ -442,6 +470,9 @@ function SceneContents({
           selectedName={selectedName}
           onSelect={onSelect}
           bodyRefs={bodyRefs}
+          systemId={systemId}
+          world={planetWorlds[planet.name] ?? null}
+          editable={editable}
         />
       ))}
 

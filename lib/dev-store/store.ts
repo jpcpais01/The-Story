@@ -16,7 +16,7 @@ import { seedWorld, seedLocations, seedCivilizations, seedEvents, seedGalaxy } f
  * hot reloads. Never used once real Firebase env vars are present.
  */
 interface DevStore {
-  world: WorldDoc;
+  worlds: Map<string, WorldDoc>;
   galaxy: GalaxyDoc;
   locations: Map<string, LocationDoc>;
   civilizations: Map<string, CivilizationDoc>;
@@ -27,7 +27,7 @@ const globalForStore = globalThis as unknown as { __devStore?: DevStore };
 
 function createStore(): DevStore {
   return {
-    world: { ...seedWorld },
+    worlds: new Map([[seedWorld.id, { ...seedWorld }]]),
     galaxy: { ...seedGalaxy },
     locations: new Map(seedLocations.map((l) => [l.slug, l])),
     civilizations: new Map(seedCivilizations.map((c) => [c.slug, c])),
@@ -38,10 +38,38 @@ function createStore(): DevStore {
 const store = globalForStore.__devStore ?? (globalForStore.__devStore = createStore());
 
 export const devStore = {
-  getWorld: (): WorldDoc => store.world,
-  updateWorld: (patch: Partial<WorldDoc>): WorldDoc => {
-    store.world = { ...store.world, ...patch, updatedAt: Date.now() };
-    return store.world;
+  // `??=` heals a dev store cached on globalThis from before worlds became a
+  // map (hot reload keeps the old object alive).
+  getWorld: (): WorldDoc => {
+    store.worlds ??= new Map([[seedWorld.id, { ...seedWorld }]]);
+    let main = store.worlds.get("main");
+    if (!main) {
+      main = { ...seedWorld };
+      store.worlds.set("main", main);
+    }
+    return main;
+  },
+  getWorldById: (id: string): WorldDoc | null => {
+    if (id === "main") return devStore.getWorld();
+    store.worlds ??= new Map([[seedWorld.id, { ...seedWorld }]]);
+    return store.worlds.get(id) ?? null;
+  },
+  listWorlds: (): WorldDoc[] => {
+    devStore.getWorld(); // ensures the map + main exist
+    return Array.from(store.worlds.values()).sort((a, b) =>
+      a.id === "main" ? -1 : b.id === "main" ? 1 : a.name.localeCompare(b.name)
+    );
+  },
+  updateWorld: (patch: Partial<WorldDoc>, id = "main"): WorldDoc => {
+    const current = devStore.getWorldById(id) ?? { ...seedWorld, id };
+    const next = { ...current, ...patch, id, updatedAt: Date.now() };
+    store.worlds.set(id, next);
+    return next;
+  },
+  deleteWorld: (id: string): void => {
+    if (id === "main") return; // the original Atlas world is not deletable
+    devStore.getWorld();
+    store.worlds.delete(id);
   },
 
   // `??=` heals a dev store cached on globalThis from before the galaxy field

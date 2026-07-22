@@ -14,7 +14,12 @@ export interface Section {
 }
 
 export interface WorldDoc {
-  id: "main";
+  /** "main" is the original Atlas world; created worlds get generated ids. */
+  id: string;
+  /** Star system this world's planet belongs to (null/absent for "main"). */
+  systemId?: string | null;
+  /** Name of the planet this world was created from (null/absent for "main"). */
+  planetName?: string | null;
   name: string;
   tagline: string;
   description: string;

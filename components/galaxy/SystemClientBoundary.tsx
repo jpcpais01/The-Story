@@ -15,9 +15,12 @@ const SystemScene = dynamic(() => import("./SystemScene"), {
 });
 
 interface SystemClientBoundaryProps {
+  systemId: string;
   systemSeed: number;
   systemName: string;
   homeWorldName: string | null;
+  planetWorlds: Record<string, { id: string; name: string }>;
+  editable: boolean;
 }
 
 export function SystemClientBoundary(props: SystemClientBoundaryProps) {

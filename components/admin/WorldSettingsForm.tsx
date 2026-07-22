@@ -46,18 +46,21 @@ export function WorldSettingsForm({ world }: { world: WorldDoc }) {
 
   async function onSubmit(values: WorldFormValues) {
     setSaved(false);
-    await saveWorld({
-      ...values,
-      heightmapUrl: heightmap?.url ?? null,
-      heightmapPublicId: heightmap?.publicId ?? null,
-      heightmapSeed: seed,
-      terrainDetailWeight: detail.detailWeight,
-      terrainDetailFrequency: detail.detailFrequency,
-      terrainDetailOctaves: detail.detailOctaves,
-      terrainDetailLacunarity: detail.detailLacunarity,
-      overlayUrl: overlay?.url ?? null,
-      overlayPublicId: overlay?.publicId ?? null,
-    });
+    await saveWorld(
+      {
+        ...values,
+        heightmapUrl: heightmap?.url ?? null,
+        heightmapPublicId: heightmap?.publicId ?? null,
+        heightmapSeed: seed,
+        terrainDetailWeight: detail.detailWeight,
+        terrainDetailFrequency: detail.detailFrequency,
+        terrainDetailOctaves: detail.detailOctaves,
+        terrainDetailLacunarity: detail.detailLacunarity,
+        overlayUrl: overlay?.url ?? null,
+        overlayPublicId: overlay?.publicId ?? null,
+      },
+      world.id
+    );
     setSaved(true);
   }
 

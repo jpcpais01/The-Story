@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getGalaxy } from "@/lib/firestore/galaxy.server";
-import { getWorld } from "@/lib/firestore/world.server";
+import { getWorld, listWorlds } from "@/lib/firestore/world.server";
 import { generateSystems, getSystemSeed } from "@/lib/galaxy/generator";
 import { SystemClientBoundary } from "@/components/galaxy/SystemClientBoundary";
 import { RegenerateSystemButton } from "@/components/galaxy/RegenerateSystemButton";
@@ -22,7 +22,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function SystemPage({ params }: PageProps) {
-  const [{ systemId }, galaxy, world] = await Promise.all([params, getGalaxy(), getWorld()]);
+  const [{ systemId }, galaxy, world, worlds] = await Promise.all([
+    params,
+    getGalaxy(),
+    getWorld(),
+    listWorlds(),
+  ]);
 
   const system = generateSystems(galaxy.galaxySeed).find((s) => s.id === systemId);
   if (!system) notFound();
@@ -30,12 +35,22 @@ export default async function SystemPage({ params }: PageProps) {
   const isHome = systemId === galaxy.homeSystemId;
   const systemSeed = getSystemSeed(galaxy, systemId);
 
+  const planetWorlds: Record<string, { id: string; name: string }> = {};
+  for (const w of worlds) {
+    if (w.systemId === systemId && w.planetName) {
+      planetWorlds[w.planetName] = { id: w.id, name: w.name };
+    }
+  }
+
   return (
     <main className="relative h-dvh w-full overflow-hidden bg-[#070c12]">
       <SystemClientBoundary
+        systemId={systemId}
         systemSeed={systemSeed}
         systemName={system.name}
         homeWorldName={isHome ? world.name || siteConfig.worldNameFallback : null}
+        planetWorlds={planetWorlds}
+        editable={EDITABLE}
       />
 
       <div className="pointer-events-none absolute inset-x-0 top-20 flex flex-col items-center gap-1">
