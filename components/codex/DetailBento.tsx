@@ -20,29 +20,22 @@ interface DetailBentoProps {
 
 function Tile({ className = "", children }: { className?: string; children: React.ReactNode }) {
   return (
-    <div className={`rounded-2xl border border-white/10 bg-ink-800/40 p-6 sm:p-7 ${className}`}>{children}</div>
+    <div
+      className={`rounded-2xl border border-white/10 bg-ink-800/40 p-6 transition-colors duration-300 hover:border-white/20 sm:p-7 ${className}`}
+    >
+      {children}
+    </div>
   );
 }
 
 /**
- * Section tiles alternate between an even half/half row and an uneven
- * quarter/three-quarter row so the grid reads as a mosaic instead of a
- * single stacked column, while every row still sums to a full width (no
- * gaps) and sections stay in their original reading order.
+ * A lone odd section out gets the full row to itself; every other section
+ * is half-width. An even count of half-width tiles always pairs up cleanly,
+ * so every row sums to exactly 4/4 columns for any number of sections --
+ * no gaps, no reordering, no dependence on content length.
  */
-function sectionLayout(index: number, total: number) {
-  const isLastOfOddPair = index === total - 1 && total % 2 === 1;
-  if (isLastOfOddPair) {
-    return { span: "sm:col-span-2 lg:col-span-4", aspect: "aspect-[21/9]" };
-  }
-  const isSecondPattern = Math.floor(index / 2) % 2 === 1;
-  const isFirstInPair = index % 2 === 0;
-  if (!isSecondPattern) {
-    return { span: "sm:col-span-1 lg:col-span-2", aspect: "aspect-[16/9]" };
-  }
-  return isFirstInPair
-    ? { span: "sm:col-span-1 lg:col-span-1", aspect: "aspect-square" }
-    : { span: "sm:col-span-1 lg:col-span-3", aspect: "aspect-[21/9]" };
+function isFeatured(index: number, total: number) {
+  return total % 2 === 1 && index === 0;
 }
 
 export function DetailBento({
@@ -60,14 +53,13 @@ export function DetailBento({
 }: DetailBentoProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <div className="relative col-span-1 overflow-hidden rounded-2xl border border-white/10 bg-ink-800 sm:col-span-2 lg:col-span-4">
+      <div className="col-span-1 overflow-hidden rounded-2xl border border-white/10 bg-ink-800 transition-colors duration-300 hover:border-white/20 sm:col-span-2 lg:col-span-4">
         {coverImage && (
-          <div className="relative aspect-[16/9] w-full sm:aspect-[3/1]">
+          <div className="relative aspect-[16/9] w-full lg:aspect-[21/9]">
             <CodexImage image={coverImage} alt={coverImage.alt || title} sizes="1200px" className="object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-ink-950/90 via-ink-950/10 to-transparent" />
           </div>
         )}
-        <div className={coverImage ? "absolute inset-x-0 bottom-0 p-6 sm:p-8" : "p-6 sm:p-8"}>
+        <div className="p-6 sm:p-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="font-display text-sm uppercase tracking-[0.2em] text-gold-400 capitalize">
               {eyebrow}
@@ -76,40 +68,32 @@ export function DetailBento({
             {atlasHref && (
               <Link
                 href={atlasHref}
-                className="flex items-center gap-1.5 rounded-full border border-white/10 bg-ink-900/60 px-3 py-1.5 text-xs font-medium text-stone-300 backdrop-blur transition-colors hover:border-gold-400/40 hover:text-gold-300"
+                className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-stone-300 transition-colors hover:border-gold-400/40 hover:text-gold-300"
               >
                 <Compass size={13} />
                 View on Atlas
               </Link>
             )}
           </div>
-          <h1 className="mt-2 font-display text-3xl text-parchment-100 sm:text-4xl">{title}</h1>
+          <h1 className="mt-2 font-display text-3xl text-parchment-100 sm:text-4xl lg:text-5xl">{title}</h1>
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-stone-300">{summary}</p>
+          {tags.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] uppercase tracking-wide text-stone-400"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      <Tile className={tags.length > 0 ? "sm:col-span-2 lg:col-span-3" : "sm:col-span-2 lg:col-span-4"}>
-        <p className="text-xs uppercase tracking-wide text-stone-500">Summary</p>
-        <p className="mt-2 text-base leading-relaxed text-stone-300">{summary}</p>
-      </Tile>
-
-      {tags.length > 0 && (
-        <Tile className="sm:col-span-2 lg:col-span-1">
-          <p className="text-xs uppercase tracking-wide text-stone-500">Tags</p>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] uppercase tracking-wide text-stone-400"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        </Tile>
-      )}
-
       {description && (
-        <Tile className="sm:col-span-2 lg:col-span-4">
+        <Tile className="border-l-2 border-l-gold-500/40 sm:col-span-2 lg:col-span-4">
           <p className="text-xs uppercase tracking-wide text-stone-500">Description</p>
           <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-stone-300 sm:text-base">
             {description}
@@ -118,12 +102,17 @@ export function DetailBento({
       )}
 
       {sections.map((section, index) => {
-        const { span, aspect } = sectionLayout(index, sections.length);
+        const featured = isFeatured(index, sections.length);
         return (
-          <Tile key={section.id} className={span}>
-            <h2 className="font-display text-xl text-parchment-100 sm:text-2xl">{section.heading}</h2>
+          <Tile key={section.id} className={featured ? "sm:col-span-2 lg:col-span-4" : "sm:col-span-1 lg:col-span-2"}>
+            <p className="font-display text-xs tracking-[0.3em] text-gold-500/60">
+              {String(index + 1).padStart(2, "0")}
+            </p>
+            <h2 className="mt-1 font-display text-xl text-parchment-100 sm:text-2xl">{section.heading}</h2>
             {section.image && (
-              <div className={`relative mt-4 w-full overflow-hidden rounded-xl bg-ink-800 ${aspect}`}>
+              <div
+                className={`relative mt-4 w-full overflow-hidden rounded-xl bg-ink-800 ${featured ? "aspect-[21/9]" : "aspect-[16/9]"}`}
+              >
                 <CodexImage
                   image={section.image}
                   alt={section.image.alt || section.heading}
@@ -149,7 +138,7 @@ export function DetailBento({
           {gallery.map((img) => (
             <div
               key={img.publicId}
-              className="relative col-span-1 aspect-square overflow-hidden rounded-2xl border border-white/10 bg-ink-800"
+              className="relative col-span-1 aspect-square overflow-hidden rounded-2xl border border-white/10 bg-ink-800 transition-colors duration-300 hover:border-white/20"
             >
               <CodexImage image={img} alt={img.alt || title} sizes="(min-width: 1024px) 300px, 45vw" className="object-cover" />
             </div>
