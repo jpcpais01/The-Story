@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import Link from "next/link";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Html, Line } from "@react-three/drei";
 import * as THREE from "three";
 import { Compass, Moon as MoonIcon } from "lucide-react";
 import { Starfield } from "./Starfield";
-import { generateSystem, type PlanetSpec, type SystemSpec } from "@/lib/galaxy/generator";
+import { generateSystem, type MoonSpec, type PlanetSpec, type SystemSpec } from "@/lib/galaxy/generator";
 import { createPlanetTexture, createRingTexture, createGlowTexture } from "@/lib/galaxy/planetTexture";
 import { mulberry32 } from "@/lib/terrain/random";
 import type { GalaxyStars } from "@/lib/galaxy/generator";
@@ -26,6 +26,16 @@ const ARCHETYPE_LABELS: Record<PlanetSpec["archetype"], string> = {
   ice: "Frozen world",
   lava: "Molten world",
 };
+
+/** Registry of selectable bodies so the camera can follow their world position. */
+type BodyRefs = MutableRefObject<Map<string, THREE.Object3D>>;
+
+function useRegisterBody(bodyRefs: BodyRefs, name: string) {
+  return (obj: THREE.Object3D | null) => {
+    if (obj) bodyRefs.current.set(name, obj);
+    else bodyRefs.current.delete(name);
+  };
+}
 
 /** Sparse shell of distant stars wrapping the system, reusing the Starfield shader. */
 function useBackdropStars(seed: number, radius: number): GalaxyStars {
@@ -106,16 +116,20 @@ function PlanetRings({ planet }: { planet: PlanetSpec }) {
 
 function Planet({
   planet,
-  selected,
+  selectedName,
   onSelect,
+  bodyRefs,
 }: {
   planet: PlanetSpec;
-  selected: boolean;
+  selectedName: string | null;
   onSelect: (name: string | null) => void;
+  bodyRefs: BodyRefs;
 }) {
   const orbitRef = useRef<THREE.Group>(null);
   const spinRef = useRef<THREE.Mesh>(null);
   const homeRingRef = useRef<THREE.Mesh>(null);
+  const registerBody = useRegisterBody(bodyRefs, planet.name);
+  const selected = selectedName === planet.name;
 
   const texture = useMemo(() => createPlanetTexture(planet), [planet]);
 
@@ -137,7 +151,12 @@ function Planet({
   });
 
   return (
-    <group ref={orbitRef}>
+    <group
+      ref={(node) => {
+        orbitRef.current = node;
+        registerBody(node);
+      }}
+    >
       <group rotation={[0, 0, planet.axialTilt]}>
         <mesh
           ref={spinRef}
@@ -167,7 +186,14 @@ function Planet({
       )}
 
       {planet.moons.map((moon) => (
-        <MoonNode key={moon.name} moon={moon} />
+        <MoonNode
+          key={moon.name}
+          moon={moon}
+          planetName={planet.name}
+          selectedName={selectedName}
+          onSelect={onSelect}
+          bodyRefs={bodyRefs}
+        />
       ))}
 
       {selected && (
@@ -213,19 +239,66 @@ function Planet({
   );
 }
 
-function MoonNode({ moon }: { moon: PlanetSpec["moons"][number] }) {
+function MoonNode({
+  moon,
+  planetName,
+  selectedName,
+  onSelect,
+  bodyRefs,
+}: {
+  moon: MoonSpec;
+  planetName: string;
+  selectedName: string | null;
+  onSelect: (name: string | null) => void;
+  bodyRefs: BodyRefs;
+}) {
   const ref = useRef<THREE.Group>(null);
+  const registerBody = useRegisterBody(bodyRefs, moon.name);
+  const selected = selectedName === moon.name;
+
   useFrame((state) => {
     if (!ref.current) return;
     const angle = moon.phase + state.clock.elapsedTime * moon.orbitSpeed;
     ref.current.position.set(Math.cos(angle) * moon.orbitRadius, 0, Math.sin(angle) * moon.orbitRadius);
   });
+
   return (
-    <group ref={ref}>
+    <group
+      ref={(node) => {
+        ref.current = node;
+        registerBody(node);
+      }}
+    >
       <mesh>
         <sphereGeometry args={[moon.radius, 16, 12]} />
         <meshStandardMaterial color={moon.color} roughness={1} metalness={0} />
       </mesh>
+      {/* Invisible, oversized hit target: real moons are a few pixels wide. */}
+      <mesh
+        visible={false}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(selected ? null : moon.name);
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          document.body.style.cursor = "pointer";
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = "";
+        }}
+      >
+        <sphereGeometry args={[Math.max(moon.radius * 2.6, 0.4), 8, 6]} />
+      </mesh>
+
+      {selected && (
+        <Html position={[0, moon.radius + 0.35, 0]} center zIndexRange={[20, 0]}>
+          <div className="pointer-events-auto -translate-y-full overflow-hidden rounded-xl border border-white/15 bg-stone-950/90 px-3 py-2 text-left shadow-2xl backdrop-blur-md">
+            <p className="whitespace-nowrap font-display text-sm font-semibold text-amber-200">{moon.name}</p>
+            <p className="mt-0.5 whitespace-nowrap text-[10px] text-stone-400">Moon of {planetName}</p>
+          </div>
+        </Html>
+      )}
     </group>
   );
 }
@@ -250,7 +323,78 @@ function OrbitLine({ radius, isHome }: { radius: number; isHome: boolean }) {
   );
 }
 
-function SceneContents({ systemSeed, systemName, homeWorldName }: SystemSceneProps) {
+/**
+ * Glides the controls' target onto the selected body and keeps riding along
+ * with it as it orbits; on deselect, glides back to the star and restores the
+ * pre-focus camera distance. Distance is only eased during the transition so
+ * the user keeps full zoom control once focused.
+ */
+function FocusController({
+  selectedName,
+  bodyRefs,
+  focusDistances,
+}: {
+  selectedName: string | null;
+  bodyRefs: BodyRefs;
+  focusDistances: Map<string, number>;
+}) {
+  const controls = useThree((state) => state.controls) as import("three-stdlib").OrbitControls | null;
+  const lastFocus = useRef<string | null>(null);
+  const restoreDistance = useRef<number | null>(null);
+  const easingDistance = useRef(false);
+  const desired = useMemo(() => new THREE.Vector3(), []);
+  const diff = useMemo(() => new THREE.Vector3(), []);
+  const offset = useMemo(() => new THREE.Vector3(), []);
+
+  useFrame((state, delta) => {
+    if (!controls) return;
+    const camera = state.camera;
+
+    if (selectedName !== lastFocus.current) {
+      // Entering focus from the resting view: remember how far out we were.
+      if (selectedName && lastFocus.current === null) {
+        restoreDistance.current = camera.position.distanceTo(controls.target);
+      }
+      easingDistance.current = true;
+      lastFocus.current = selectedName;
+    }
+
+    const body = selectedName ? bodyRefs.current.get(selectedName) : null;
+    if (body) body.getWorldPosition(desired);
+    else desired.set(0, 0, 0);
+
+    // Pan target and camera together so the view translates, never swings.
+    const k = 1 - Math.exp(-5.5 * delta);
+    diff.subVectors(desired, controls.target);
+    controls.target.addScaledVector(diff, k);
+    camera.position.addScaledVector(diff, k);
+
+    // Ease the camera distance only until it settles, then hand zoom back.
+    if (easingDistance.current) {
+      const targetDistance = body
+        ? focusDistances.get(selectedName!) ?? 8
+        : restoreDistance.current ?? camera.position.distanceTo(controls.target);
+      offset.subVectors(camera.position, controls.target);
+      const current = offset.length();
+      const next = current + (targetDistance - current) * k;
+      camera.position.copy(controls.target).addScaledVector(offset.normalize(), next);
+      if (Math.abs(next - targetDistance) < Math.max(0.02 * targetDistance, 0.05)) {
+        easingDistance.current = false;
+        if (!body) restoreDistance.current = null;
+      }
+    }
+  });
+
+  return null;
+}
+
+function SceneContents({
+  systemSeed,
+  systemName,
+  homeWorldName,
+  selectedName,
+  onSelect,
+}: SystemSceneProps & { selectedName: string | null; onSelect: (name: string | null) => void }) {
   const system = useMemo(
     () => generateSystem(systemSeed, systemName, homeWorldName),
     [systemSeed, systemName, homeWorldName]
@@ -260,8 +404,20 @@ function SceneContents({ systemSeed, systemName, homeWorldName }: SystemScenePro
     [system]
   );
   const backdrop = useBackdropStars(systemSeed, extent);
-  const [selectedName, setSelectedName] = useState<string | null>(null);
+  const bodyRefs = useRef(new Map<string, THREE.Object3D>());
   const camera = useThree((state) => state.camera);
+
+  // How close the camera should settle when focusing each body.
+  const focusDistances = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const planet of system.planets) {
+      map.set(planet.name, Math.max((planet.rings ? planet.rings.outer : planet.radius) * 5.5, 4.5));
+      for (const moon of planet.moons) {
+        map.set(moon.name, Math.max(moon.radius * 18, 3));
+      }
+    }
+    return map;
+  }, [system]);
 
   // Frame the whole system whatever its size: bigger systems start farther out.
   useEffect(() => {
@@ -283,35 +439,53 @@ function SceneContents({ systemSeed, systemName, homeWorldName }: SystemScenePro
         <Planet
           key={planet.name}
           planet={planet}
-          selected={selectedName === planet.name}
-          onSelect={setSelectedName}
+          selectedName={selectedName}
+          onSelect={onSelect}
+          bodyRefs={bodyRefs}
         />
       ))}
+
+      <FocusController selectedName={selectedName} bodyRefs={bodyRefs} focusDistances={focusDistances} />
 
       <OrbitControls
         makeDefault
         enableDamping
         dampingFactor={0.08}
         enablePan={false}
-        minDistance={extent * 0.18}
+        minDistance={1.4}
         maxDistance={extent * 2.4}
         maxPolarAngle={Math.PI * 0.52}
-        onStart={() => setSelectedName(null)}
       />
     </>
   );
 }
 
 export default function SystemScene(props: SystemSceneProps) {
+  const [selectedName, setSelectedName] = useState<string | null>(null);
+  const pointerDown = useRef({ x: 0, y: 0 });
+
+  // Deselect on a genuine click on empty space -- not on the click browsers
+  // synthesize at the end of an orbit drag.
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      pointerDown.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener("pointerdown", onDown);
+    return () => window.removeEventListener("pointerdown", onDown);
+  }, []);
+
   return (
     <Canvas
       dpr={[1, 2]}
       camera={{ position: [0, 34, 62], fov: 42, near: 0.1, far: 4000 }}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       className="touch-none"
-      onPointerMissed={() => undefined}
+      onPointerMissed={(e) => {
+        const moved = Math.hypot(e.clientX - pointerDown.current.x, e.clientY - pointerDown.current.y);
+        if (moved < 8) setSelectedName(null);
+      }}
     >
-      <SceneContents {...props} />
+      <SceneContents {...props} selectedName={selectedName} onSelect={setSelectedName} />
     </Canvas>
   );
 }
