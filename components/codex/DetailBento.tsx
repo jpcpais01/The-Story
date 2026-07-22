@@ -24,6 +24,27 @@ function Tile({ className = "", children }: { className?: string; children: Reac
   );
 }
 
+/**
+ * Section tiles alternate between an even half/half row and an uneven
+ * quarter/three-quarter row so the grid reads as a mosaic instead of a
+ * single stacked column, while every row still sums to a full width (no
+ * gaps) and sections stay in their original reading order.
+ */
+function sectionLayout(index: number, total: number) {
+  const isLastOfOddPair = index === total - 1 && total % 2 === 1;
+  if (isLastOfOddPair) {
+    return { span: "sm:col-span-2 lg:col-span-4", aspect: "aspect-[21/9]" };
+  }
+  const isSecondPattern = Math.floor(index / 2) % 2 === 1;
+  const isFirstInPair = index % 2 === 0;
+  if (!isSecondPattern) {
+    return { span: "sm:col-span-1 lg:col-span-2", aspect: "aspect-[16/9]" };
+  }
+  return isFirstInPair
+    ? { span: "sm:col-span-1 lg:col-span-1", aspect: "aspect-square" }
+    : { span: "sm:col-span-1 lg:col-span-3", aspect: "aspect-[21/9]" };
+}
+
 export function DetailBento({
   eyebrow,
   title,
@@ -72,7 +93,7 @@ export function DetailBento({
       </Tile>
 
       {tags.length > 0 && (
-        <Tile className="lg:col-span-1">
+        <Tile className="sm:col-span-2 lg:col-span-1">
           <p className="text-xs uppercase tracking-wide text-stone-500">Tags</p>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {tags.map((tag) => (
@@ -96,37 +117,44 @@ export function DetailBento({
         </Tile>
       )}
 
-      {sections.map((section) => (
-        <Tile key={section.id} className={section.image ? "sm:col-span-2 lg:col-span-4" : "sm:col-span-2 lg:col-span-2"}>
-          <h2 className="font-display text-xl text-parchment-100 sm:text-2xl">{section.heading}</h2>
-          {section.image && (
-            <div className="relative mt-4 aspect-[16/9] w-full overflow-hidden rounded-xl bg-ink-800">
-              <CodexImage
-                image={section.image}
-                alt={section.image.alt || section.heading}
-                sizes="(min-width: 1024px) 900px, 90vw"
-                className="object-cover"
-              />
-            </div>
-          )}
-          <div
-            className="prose prose-lore prose-invert mt-4 max-w-none text-sm sm:text-base"
-            dangerouslySetInnerHTML={{ __html: section.bodyHtml }}
-          />
-        </Tile>
-      ))}
+      {sections.map((section, index) => {
+        const { span, aspect } = sectionLayout(index, sections.length);
+        return (
+          <Tile key={section.id} className={span}>
+            <h2 className="font-display text-xl text-parchment-100 sm:text-2xl">{section.heading}</h2>
+            {section.image && (
+              <div className={`relative mt-4 w-full overflow-hidden rounded-xl bg-ink-800 ${aspect}`}>
+                <CodexImage
+                  image={section.image}
+                  alt={section.image.alt || section.heading}
+                  sizes="(min-width: 1024px) 900px, 90vw"
+                  className="object-cover"
+                />
+              </div>
+            )}
+            <div
+              className="prose prose-lore prose-invert mt-4 max-w-none text-sm sm:text-base"
+              dangerouslySetInnerHTML={{ __html: section.bodyHtml }}
+            />
+          </Tile>
+        );
+      })}
 
       {gallery.length > 0 && (
-        <Tile className="sm:col-span-2 lg:col-span-4">
-          <p className="mb-3 text-xs uppercase tracking-wide text-stone-500">Gallery</p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {gallery.map((img) => (
-              <div key={img.publicId} className="relative aspect-square overflow-hidden rounded-lg bg-ink-800">
-                <CodexImage image={img} alt={img.alt || title} sizes="240px" className="object-cover" />
-              </div>
-            ))}
+        <>
+          <div className="col-span-1 flex items-center gap-3 pt-2 sm:col-span-2 lg:col-span-4">
+            <p className="text-xs uppercase tracking-wide text-stone-500">Gallery</p>
+            <div className="h-px flex-1 bg-white/10" />
           </div>
-        </Tile>
+          {gallery.map((img) => (
+            <div
+              key={img.publicId}
+              className="relative col-span-1 aspect-square overflow-hidden rounded-2xl border border-white/10 bg-ink-800"
+            >
+              <CodexImage image={img} alt={img.alt || title} sizes="(min-width: 1024px) 300px, 45vw" className="object-cover" />
+            </div>
+          ))}
+        </>
       )}
 
       {related.length > 0 && (
