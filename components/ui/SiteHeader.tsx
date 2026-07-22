@@ -7,6 +7,7 @@ import { EDITABLE } from "@/config/site.config";
 
 const NAV_LINKS = [
   { href: "/", label: "Atlas" },
+  { href: "/galaxy", label: "Galaxy" },
   { href: "/codex", label: "Codex" },
   { href: "/timeline", label: "Timeline" },
 ];

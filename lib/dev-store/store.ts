@@ -4,8 +4,9 @@ import type {
   LocationDoc,
   CivilizationDoc,
   EventDoc,
+  GalaxyDoc,
 } from "@/types/firestore";
-import { seedWorld, seedLocations, seedCivilizations, seedEvents } from "./seed";
+import { seedWorld, seedLocations, seedCivilizations, seedEvents, seedGalaxy } from "./seed";
 
 /**
  * In-memory data store used only when no Firebase project is configured yet
@@ -16,6 +17,7 @@ import { seedWorld, seedLocations, seedCivilizations, seedEvents } from "./seed"
  */
 interface DevStore {
   world: WorldDoc;
+  galaxy: GalaxyDoc;
   locations: Map<string, LocationDoc>;
   civilizations: Map<string, CivilizationDoc>;
   events: Map<string, EventDoc>;
@@ -26,6 +28,7 @@ const globalForStore = globalThis as unknown as { __devStore?: DevStore };
 function createStore(): DevStore {
   return {
     world: { ...seedWorld },
+    galaxy: { ...seedGalaxy },
     locations: new Map(seedLocations.map((l) => [l.slug, l])),
     civilizations: new Map(seedCivilizations.map((c) => [c.slug, c])),
     events: new Map(seedEvents.map((e) => [e.slug, e])),
@@ -39,6 +42,22 @@ export const devStore = {
   updateWorld: (patch: Partial<WorldDoc>): WorldDoc => {
     store.world = { ...store.world, ...patch, updatedAt: Date.now() };
     return store.world;
+  },
+
+  // `??=` heals a dev store cached on globalThis from before the galaxy field
+  // existed (hot reload keeps the old object alive).
+  getGalaxy: (): GalaxyDoc => (store.galaxy ??= { ...seedGalaxy }),
+  updateGalaxy: (patch: Partial<GalaxyDoc>): GalaxyDoc => {
+    store.galaxy = {
+      ...(store.galaxy ?? { ...seedGalaxy }),
+      ...patch,
+      systemSeedOverrides: {
+        ...store.galaxy.systemSeedOverrides,
+        ...patch.systemSeedOverrides,
+      },
+      updatedAt: Date.now(),
+    };
+    return store.galaxy;
   },
 
   listLocations: (): LocationDoc[] =>

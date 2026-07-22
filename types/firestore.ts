@@ -89,6 +89,22 @@ export interface EventDoc {
   updatedAt: number;
 }
 
+export interface GalaxyDoc {
+  id: "main";
+  /** Seed the entire galaxy (star positions, system placement, names) derives from. */
+  galaxySeed: number;
+  /**
+   * Per-system seed overrides written by the admin "Regenerate" action.
+   * A system's effective seed is systemSeedOverrides[systemId] if present,
+   * otherwise derived deterministically from galaxySeed + systemId -- so the
+   * same system always renders identically until explicitly regenerated.
+   */
+  systemSeedOverrides: Record<string, number>;
+  /** Which star system contains the world charted on the Atlas. */
+  homeSystemId: string;
+  updatedAt: number;
+}
+
 export type CodexEntryType = "civilization" | "event" | "location";
 
 export interface CodexEntrySummary {

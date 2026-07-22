@@ -3,6 +3,7 @@ import type {
   LocationDoc,
   CivilizationDoc,
   EventDoc,
+  GalaxyDoc,
 } from "@/types/firestore";
 
 const now = Date.now();
@@ -158,3 +159,11 @@ export const seedEvents: EventDoc[] = [
     updatedAt: now,
   },
 ];
+
+export const seedGalaxy: GalaxyDoc = {
+  id: "main",
+  galaxySeed: 421,
+  systemSeedOverrides: {},
+  homeSystemId: "sys-17",
+  updatedAt: now,
+};

@@ -12,6 +12,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /galaxy/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /locations/{slug} {
       allow read: if true;
       allow write: if isAdmin();
