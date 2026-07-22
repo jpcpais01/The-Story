@@ -181,12 +181,16 @@ function SceneContents({ galaxySeed, homeSystemId, worldName }: GalaxySceneProps
       <MapControls
         ref={controlsRef}
         makeDefault
+        enableDamping
         enableRotate={false}
         screenSpacePanning={false}
         minZoom={framing.min}
         maxZoom={framing.max}
         minPolarAngle={0.0001}
         maxPolarAngle={0.0001}
+        minAzimuthAngle={0}
+        maxAzimuthAngle={0}
+        target={[0, 0, 0]}
         dampingFactor={0.12}
         zoomSpeed={1.1}
       />
@@ -199,7 +203,7 @@ export default function GalaxyScene(props: GalaxySceneProps) {
     <Canvas
       orthographic
       dpr={[1, 2]}
-      camera={{ position: [0, 120, 0], up: [0, 0, -1], near: 1, far: 500 }}
+      camera={{ position: [0, 120, 0.01], near: 0.1, far: 500 }}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       className="touch-none"
     >
